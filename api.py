@@ -1,7 +1,7 @@
 import json
 import os
 from requests import get, post, utils
-
+from api_exceptions import NotLoggedInException
 
 class Post:
     def __init__(self, id=None, user=None, promoted=None, up=None, down=None, created=None, image=None, thumb=None,
@@ -34,11 +34,6 @@ class Post:
     def to_json(self):
         return json.dumps(vars(self))
 
-        # return json.dumps({"id": self.id, "user": self.user.name, "promoted": self.promoted, "up": self.up,
-        #                   "down": self.down, "created": self.created, "image": self.image, "thumb": self.image,
-        #                   "fullsize": self.fullsize, "width": self.width, "height": self.height, "audio": self.audio,
-        #                   "source": self.source, "flags": self.flags, "mark": self.mark})
-
 
 class User:
     def __init__(self, name=None, id=None, registered=None, admin=None, banned=None, bannedUntil=None, mark=None,
@@ -68,11 +63,6 @@ class User:
     def to_json(self):
         return json.dumps(vars(self))
 
-        # return json.dumps({"name": self.name, "id": self.id, "registered": self.registered, "admin": self.admin,
-        #                   "banned": self.banned, "bannedUntil": self.bannedUntil, "mark": self.mark,
-        #                   "score": self.score, "tags": self.tags, "likes": self.likes, "comments": self.comments,
-        #                   "followers": self.followers})
-
 
 class Comment:
     def __init__(self, id=None, comment=None, post=None, user=None, parent=None, created=None, up=None, down=None,
@@ -100,13 +90,8 @@ class Comment:
     def to_json(self):
         return json.dumps(vars(self))
 
-        # return json.dumps({"id": self.id, "comment": self.comment, "post": self.post.id, "user": self.user.name,
-        #                   "parent": self.parent.id, "created": self.created, "up": self.u, "down": self.down,
-        #                   "confidence": self.confidence, "mark": self.mark})
-
 
 class Tag:
-
     def __init__(self, id=None, post=None, tag=None, confidence=None, json_str=None):
         if json_str is None:
             self.id = id
@@ -131,8 +116,6 @@ class Tag:
     def to_json(self):
         return json.dumps(vars(self))
 
-        #return json.dumps({"id": self.id, "post": self.post.id, "tag": self.tag, "confidence": self.confidence})
-
 
 class Api:
     def __init__(self, username="", password="", tmp_dir="./"):
@@ -147,6 +130,8 @@ class Api:
         self.login_url = 'https://pr0gramm.com/api/user/login/'
         self.items_url = self.api_url + 'items/get'
         self.item_url = self.api_url + 'items/info'
+
+        self.login()
 
     def items_get(self, item, flag=1, promoted=0, older=True):
         r = get(self.items_url + "?get=" + item,
@@ -167,6 +152,19 @@ class Api:
                 params={'flags': flag, 'promoted': 1},
                 cookies=self.__login_cookie)
         print str(r.json())
+
+    def get_inbox(self):
+        r = get("https://pr0gramm.com/api/inbox/all",
+                params={},
+                cookies=self.__login_cookie)
+        content = json.loads(r.content.decode("utf-8"))
+        try:
+            if content["code"] == 403:
+                raise NotLoggedInException()
+        except KeyError:
+            pass
+        print content
+        return str(content)
 
     def login(self):
         if self.__password != "" and self.__username != "":

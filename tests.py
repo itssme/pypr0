@@ -17,10 +17,21 @@ class Pr0grammApiTests(unittest.TestCase):
         self.test_comment = Comment(1, "Han geblussert", self.test_post.id, self.test_user.name, 0, 1525174308, 4, 1,
                                     0.5, 0)
 
+        # for testing with login
+        self.USERNAME = ""
+        self.PASSWORD = ""
+
     def test_getUrl(self):
         api = Api("", "", "./temp")
         api.items_get("2504967", )
         self.assertTrue(True)
+
+    def test_login(self):
+
+        api = Api(self.USERNAME, self.PASSWORD, "./temp")
+        api.item_info(item=2380949)
+        api.get_inbox()
+
 
     # POST OBJECT TESTS
 
