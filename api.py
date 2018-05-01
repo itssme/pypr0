@@ -4,23 +4,79 @@ from requests import get, post, utils
 
 
 class Post:
-    def __init__(self, id, user, promoted, up, down, created, image, thumb, fullsize, width, height, audio, source, flags, mark):
+    def __init__(self, id=None, user=None, promoted=None, up=None, down=None, created=None, image=None, thumb=None,
+                 fullsize=None, width=None, height=None, audio=None, source=None, flags=None, mark=None, json_str=None):
         self.id = id
+        self.user = user
+        self.promoted = promoted
+        self.up = up
+        self.down = down
+        self.created = created
+        self.image = image
+        self.thumb = thumb
+        self.fullsize = fullsize
+        self.width = width
+        self.height = height
+        self.audio = audio
+        self.source = source
+        self.flags = flags
+        self.mark = mark
+
+        if json_str is not None:
+            self.json_to_object(json_str)
+
+    def json_to_object(self, json_str):
+        json_obj = json.loads(json_str)
+
+        for key, value in vars(self).iteritems():
+            vars(self)[key] = json_obj[key]
 
     def to_json(self):
-        pass
+        return json.dumps(vars(self))
+
+        # return json.dumps({"id": self.id, "user": self.user.name, "promoted": self.promoted, "up": self.up,
+        #                   "down": self.down, "created": self.created, "image": self.image, "thumb": self.image,
+        #                   "fullsize": self.fullsize, "width": self.width, "height": self.height, "audio": self.audio,
+        #                   "source": self.source, "flags": self.flags, "mark": self.mark})
 
 
 class User:
-    def __init__(self, name, id, registered, admin, banned, bannedUntil, mark, score, tags, likes, comments, followers):
-        pass
+    def __init__(self, name=None, id=None, registered=None, admin=None, banned=None, bannedUntil=None, mark=None,
+                 score=None, tags=None, likes=None, comments=None, followers=None, json_str=None):
+        self.name = name
+        self.id = id
+        self.registered = registered
+        self.admin = admin
+        self.banned = banned
+        self.bannedUntil = bannedUntil
+        self.mark = mark
+        self.score = score
+        self.tags = tags
+        self.likes = likes
+        self.comments = comments
+        self.followers = followers
+
+        if json_str is not None:
+            self.json_to_object(json_str)
+
+    def json_to_object(self, json_str):
+        json_obj = json.loads(json_str)
+
+        for key, value in vars(self).iteritems():
+            vars(self)[key] = json_obj[key]
 
     def to_json(self):
-        pass
+        return json.dumps(vars(self))
+
+        # return json.dumps({"name": self.name, "id": self.id, "registered": self.registered, "admin": self.admin,
+        #                   "banned": self.banned, "bannedUntil": self.bannedUntil, "mark": self.mark,
+        #                   "score": self.score, "tags": self.tags, "likes": self.likes, "comments": self.comments,
+        #                   "followers": self.followers})
 
 
 class Comment:
-    def __init__(self, id, comment, post, user, parent, created, up, down, confidence, mark):
+    def __init__(self, id=None, comment=None, post=None, user=None, parent=None, created=None, up=None, down=None,
+                 confidence=None, mark=None, json_str=None):
         self.id = id
         self.comment = comment
         self.post = post
@@ -32,21 +88,50 @@ class Comment:
         self.confidence = confidence
         self.mark = mark
 
+        if json_str is not None:
+            self.json_to_object(json_str)
+
+    def json_to_object(self, json_str):
+        json_obj = json.loads(json_str)
+
+        for key, value in vars(self).iteritems():
+            vars(self)[key] = json_obj[key]
+
     def to_json(self):
-        return json.dumps({"id": self.id, "comment": self.comment, "post": self.post.id, "user": self.user.name,
-                           "parent": self.parent.id, "created": self.created, "up": self.u, "down": self.down,
-                           "confidence": self.confidence, "mark": self.mark})
+        return json.dumps(vars(self))
+
+        # return json.dumps({"id": self.id, "comment": self.comment, "post": self.post.id, "user": self.user.name,
+        #                   "parent": self.parent.id, "created": self.created, "up": self.u, "down": self.down,
+        #                   "confidence": self.confidence, "mark": self.mark})
 
 
 class Tag:
-    def __init__(self, id, post, tag, confidence):
-        self.id = id
-        self.post = post
-        self.tag = tag
-        self.confidence = confidence
+
+    def __init__(self, id=None, post=None, tag=None, confidence=None, json_str=None):
+        if json_str is None:
+            self.id = id
+            self.post = post
+            self.tag = tag
+            self.confidence = confidence
+        elif json_str is not None and id is None:
+            self.id = id
+            self.post = post
+            self.tag = tag
+            self.confidence = confidence
+            self.json_to_object(json_str)
+        else:
+            raise Exception("Could not create object. Can't create via json string and normal arguments.")
+
+    def json_to_object(self, json_str):
+        json_obj = json.loads(json_str)
+
+        for key, value in vars(self).iteritems():
+            vars(self)[key] = json_obj[key]
 
     def to_json(self):
-        return json.dumps({"id": self.id, "post": self.post.id, "tag": self.tag, "confidence": self.confidence})
+        return json.dumps(vars(self))
+
+        #return json.dumps({"id": self.id, "post": self.post.id, "tag": self.tag, "confidence": self.confidence})
 
 
 class Api:
