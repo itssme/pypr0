@@ -3,6 +3,9 @@ import os
 from requests import get, post, utils
 from api_exceptions import NotLoggedInException
 
+# TODO: implement logging
+
+
 class Post:
     def __init__(self, id=None, user=None, promoted=None, up=None, down=None, created=None, image=None, thumb=None,
                  fullsize=None, width=None, height=None, audio=None, source=None, flags=None, mark=None, json_str=None):
@@ -134,8 +137,14 @@ class Api:
         self.login()
 
     def items_get(self, item, flag=1, promoted=0, older=True):
-        r = get(self.items_url + "?get=" + item,
-                params={'flags': flag, 'promoted': promoted},
+        get_type = 'get'
+        if older:
+            get_type = 'older'
+        elif older is not None:
+            get_type = 'newer'
+
+        r = get(self.items_url,
+                params={get_type: item, 'flags': flag, 'promoted': promoted},
                 cookies=self.__login_cookie)
         print r.content.decode("utf-8")
         return 0
@@ -163,7 +172,6 @@ class Api:
                 raise NotLoggedInException()
         except KeyError:
             pass
-        print content
         return str(content)
 
     def login(self):
