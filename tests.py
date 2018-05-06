@@ -5,6 +5,7 @@ from api import Tag
 from api import Post
 from api import User
 from api import Comment
+from api import Posts
 
 
 class Pr0grammApiTests(unittest.TestCase):
@@ -27,15 +28,22 @@ class Pr0grammApiTests(unittest.TestCase):
         self.assertTrue(True)
 
     def test_login(self):
-
         api = Api(self.USERNAME, self.PASSWORD, "./temp")
         api.item_info(item=2380949)
         api.get_inbox()
 
+    def test_items_get1(self):
+        api = Api(tmp_dir="./temp")
+        json_str = api.items_get(2525097, older=None)
+        posts_obj = Posts(json_str)
+        for elem in posts_obj:
+            print elem
+        self.assertTrue(True)
+
 
     # POST OBJECT TESTS
 
-    def test_json_to_post(self):
+    def test_json_to_post1(self):
         test_post_2 = Post(json_str=self.test_post.to_json())
         test_json_str = test_post_2.to_json()
         obj1 = json.loads(test_json_str)

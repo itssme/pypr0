@@ -6,6 +6,33 @@ from api_exceptions import NotLoggedInException
 # TODO: implement logging
 
 
+class Posts:
+    def __init__(self, json_str):
+        print json_str
+        self.json = json.loads(json_str)
+        temp_items = self.json["items"]
+        self.items = []
+        for elem in temp_items:
+            self.items.append(Post(json_str=json.dumps(elem)))
+        self.current = -1
+
+    def __repr__(self):
+        return json.dumps(self.json)
+
+    def __str__(self):
+        return json.dumps(self.json)
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        self.current += 1
+        if self.current >= len(self.items):
+            raise StopIteration
+        else:
+            return self.items[self.current]
+
+
 class Post:
     def __init__(self, id=None, user=None, promoted=None, up=None, down=None, created=None, image=None, thumb=None,
                  fullsize=None, width=None, height=None, audio=None, source=None, flags=None, mark=None, json_str=None):
@@ -27,6 +54,12 @@ class Post:
 
         if json_str is not None:
             self.json_to_object(json_str)
+
+    def __repr__(self):
+        return self.to_json()
+
+    def __str__(self):
+        return self.to_json()
 
     def json_to_object(self, json_str):
         json_obj = json.loads(json_str)
@@ -57,6 +90,12 @@ class User:
         if json_str is not None:
             self.json_to_object(json_str)
 
+    def __repr__(self):
+        return self.to_json()
+
+    def __str__(self):
+        return self.to_json()
+
     def json_to_object(self, json_str):
         json_obj = json.loads(json_str)
 
@@ -84,6 +123,12 @@ class Comment:
         if json_str is not None:
             self.json_to_object(json_str)
 
+    def __repr__(self):
+        return self.to_json()
+
+    def __str__(self):
+        return self.to_json()
+
     def json_to_object(self, json_str):
         json_obj = json.loads(json_str)
 
@@ -109,6 +154,12 @@ class Tag:
             self.json_to_object(json_str)
         else:
             raise Exception("Could not create object. Can't create via json string and normal arguments.")
+
+    def __repr__(self):
+        return self.to_json()
+
+    def __str__(self):
+        return self.to_json()
 
     def json_to_object(self, json_str):
         json_obj = json.loads(json_str)
@@ -137,6 +188,26 @@ class Api:
         self.login()
 
     def items_get(self, item, flag=1, promoted=0, older=True):
+        """
+        Gets items from the pr0gramm api
+
+        Parameters
+        ----------
+        :param item: int or str
+                     requested post for example: 2525097
+        :param flag: int or str
+                     TODO
+        :param promoted: int 0 or 1
+                         0 for posts that haven't been on
+                         top and 1 for posts that have
+        :param older: bool or None
+                      True for 'older' posts than the item requested
+                      False for 'newer' posts
+                      None for 'get'
+        :return: str
+                 json reply from api
+        """
+
         get_type = 'get'
         if older:
             get_type = 'older'
@@ -146,19 +217,18 @@ class Api:
         r = get(self.items_url,
                 params={get_type: item, 'flags': flag, 'promoted': promoted},
                 cookies=self.__login_cookie)
-        print r.content.decode("utf-8")
-        return 0
+        print r.url
+        return r.content.decode('utf-8')
 
     def item_info(self, item, flag=1, promoted=0):
         r = get(self.item_url + "?itemId=" + str(item),
                 params={'flags': flag, 'promoted': promoted},
                 cookies=self.__login_cookie)
-        print r.content.decode("utf-8")
-        return 0
+        return r.content.decode("utf-8")
 
-    def get_top_image(self, flag=1):
+    def get_newest_image(self, flag=1, promoted=0):
         r = get(self.items_url,
-                params={'flags': flag, 'promoted': 1},
+                params={'flags': flag, 'promoted': promoted},
                 cookies=self.__login_cookie)
         print str(r.json())
 
