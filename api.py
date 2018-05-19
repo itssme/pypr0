@@ -8,7 +8,6 @@ from api_exceptions import NotLoggedInException
 
 class Posts:
     def __init__(self, json_str):
-        print json_str
         self.json = json.loads(json_str)
         temp_items = self.json["items"]
         self.items = []
@@ -220,9 +219,26 @@ class Api:
         print r.url
         return r.content.decode('utf-8')
 
-    def item_info(self, item, flag=1, promoted=0):
+    def item_info(self, item, flag=1):
+        """
+        Get item info from pr0gramm api
+        For example:
+          'https://pr0gramm.com/api/items/info?itemId=2525097'
+
+        Will return all comments and tags for the specified post
+
+        Parameters
+        ----------
+        :param item: int or str
+                     requested post for example: 2525097
+        :param flag: int or str
+                     TODO
+        :return: str
+                 json reply from api
+        """
+
         r = get(self.item_url + "?itemId=" + str(item),
-                params={'flags': flag, 'promoted': promoted},
+                params={'flags': flag},
                 cookies=self.__login_cookie)
         return r.content.decode("utf-8")
 
@@ -230,7 +246,7 @@ class Api:
         r = get(self.items_url,
                 params={'flags': flag, 'promoted': promoted},
                 cookies=self.__login_cookie)
-        print str(r.json())
+        return r.content.decode("utf-8")
 
     def get_inbox(self):
         r = get("https://pr0gramm.com/api/inbox/all",
@@ -242,7 +258,7 @@ class Api:
                 raise NotLoggedInException()
         except KeyError:
             pass
-        return str(content)
+        return r.content.decode("utf-8")
 
     def login(self):
         if self.__password != "" and self.__username != "":

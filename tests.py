@@ -6,6 +6,7 @@ from api import Post
 from api import User
 from api import Comment
 from api import Posts
+from api_exceptions import NotLoggedInException
 
 
 class Pr0grammApiTests(unittest.TestCase):
@@ -27,17 +28,28 @@ class Pr0grammApiTests(unittest.TestCase):
         api.items_get("2504967", )
         self.assertTrue(True)
 
-    def test_login(self):
+    def test_login1(self):
         api = Api(self.USERNAME, self.PASSWORD, "./temp")
-        api.item_info(item=2380949)
-        api.get_inbox()
+        try:
+            api.get_inbox()
+            assert True
+        except NotLoggedInException:
+            assert False
+
+    def test_login2(self):
+        api = Api("", "", "./temp")
+        try:
+            api.get_inbox()
+            assert False
+        except NotLoggedInException:
+            assert True
 
     def test_items_get1(self):
         api = Api(tmp_dir="./temp")
         json_str = api.items_get(2525097, older=None)
         posts_obj = Posts(json_str)
         for elem in posts_obj:
-            print elem
+            pass
         self.assertTrue(True)
 
 
