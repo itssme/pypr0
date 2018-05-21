@@ -59,7 +59,7 @@ https://pr0gramm.com/api/items/get?id=2525097&flags=9
   "qc": 3
 }
 ```
-
+---
 - `atEnd:bool` <br>
 Will be `true` if the requested object is the first one
 ---
@@ -68,7 +68,7 @@ Will be `true` if the requested object is the newest one
 ---
 - `error:str` <br>
 Will contain a message if a faulty request is made <br>
-For example if requesting a item that does not exist `error` will be:
+For example if requesting an item that does not exist `error` will be:
 `"error"="notFound"` and items will look like `"items"=null`
 ---
 - `item:list` <br>
@@ -107,10 +107,14 @@ A list containing `posts`
         Flags for sfw/nsfp/nsfw/nsfl
         - `user:str` <br>
         Unique name of the uploader
+---
 - `mark:int` <br>
+---
 - `ts:int` <br>
+---
 - `rt:int` <br>
-- `qt_ont` <br>
+---
+- `qc:int` <br>
 
 #### Post Object
 

@@ -3,6 +3,7 @@ import os
 from requests import get, post, utils
 from api_exceptions import NotLoggedInException
 
+
 # TODO: implement logging
 
 
@@ -21,6 +22,12 @@ class Posts:
     def __str__(self):
         return json.dumps(self.json)
 
+    def __getitem__(self, key):
+        return self.items[key]
+
+    def __len__(self):
+        return len(self.items)
+
     def __iter__(self):
         return self
 
@@ -30,6 +37,9 @@ class Posts:
             raise StopIteration
         else:
             return self.items[self.current]
+
+    def get_items(self):
+        return self.items
 
 
 class Post:
@@ -59,6 +69,9 @@ class Post:
 
     def __str__(self):
         return self.to_json()
+
+    def __getitem__(self, key):
+        return vars(self)[key]
 
     def json_to_object(self, json_str):
         json_obj = json.loads(json_str)
@@ -95,6 +108,9 @@ class User:
     def __str__(self):
         return self.to_json()
 
+    def __getitem__(self, key):
+        return vars(self)[key]
+
     def json_to_object(self, json_str):
         json_obj = json.loads(json_str)
 
@@ -128,6 +144,9 @@ class Comment:
     def __str__(self):
         return self.to_json()
 
+    def __getitem__(self, key):
+        return vars(self)[key]
+
     def json_to_object(self, json_str):
         json_obj = json.loads(json_str)
 
@@ -139,20 +158,15 @@ class Comment:
 
 
 class Tag:
-    def __init__(self, id=None, post=None, tag=None, confidence=None, json_str=None):
-        if json_str is None:
-            self.id = id
-            self.post = post
-            self.tag = tag
-            self.confidence = confidence
-        elif json_str is not None and id is None:
-            self.id = id
-            self.post = post
-            self.tag = tag
-            self.confidence = confidence
+    def __init__(self, id=None, tag=None, confidence=None, json_str=None, json_obj=None):
+        self.id = id
+        self.tag = tag
+        self.confidence = confidence
+
+        if json_str is not None:
             self.json_to_object(json_str)
-        else:
-            raise Exception("Could not create object. Can't create via json string and normal arguments.")
+        elif json_obj is not None:
+            self.json_to_object(json_obj=json_obj)
 
     def __repr__(self):
         return self.to_json()
@@ -160,8 +174,12 @@ class Tag:
     def __str__(self):
         return self.to_json()
 
-    def json_to_object(self, json_str):
-        json_obj = json.loads(json_str)
+    def __getitem__(self, key):
+        return vars(self)[key]
+
+    def json_to_object(self, json_str="", json_obj=""):
+        if json_obj == "":
+            json_obj = json.loads(json_str)
 
         for key, value in vars(self).iteritems():
             vars(self)[key] = json_obj[key]
@@ -186,7 +204,7 @@ class Api:
 
         self.login()
 
-    def items_get(self, item, flag=1, promoted=0, older=True):
+    def get_items(self, item, flag=1, promoted=0, older=True):
         """
         Gets items from the pr0gramm api
 
@@ -197,8 +215,8 @@ class Api:
         :param flag: int or str
                      TODO
         :param promoted: int 0 or 1
-                         0 for posts that haven't been on
-                         top and 1 for posts that have
+                         0 for all posts
+                         1 for posts that have been in top
         :param older: bool or None
                       True for 'older' posts than the item requested
                       False for 'newer' posts
@@ -216,10 +234,47 @@ class Api:
         r = get(self.items_url,
                 params={get_type: item, 'flags': flag, 'promoted': promoted},
                 cookies=self.__login_cookie)
-        print r.url
+
         return r.content.decode('utf-8')
 
-    def item_info(self, item, flag=1):
+    def get_items_by_tag(self, tags, flag=1, older=0, promoted=0):
+        """
+        Gets items with a specific tag from the pr0gramm api
+
+        Parameters
+        ----------
+        :param tags: str
+                     Search posts by tags
+                     Example: 'schmuserkadser blus'
+                               Will return all posts with the tags
+                               'schmuserkadser' and 'blus'
+        :param flag: int or str
+                     TODO
+        :param older: int
+                      Specifies the first post that will be returned from the api
+                      For example: older=2525097 tags='schmuserkadser' will get
+                                   the post '2525097' and all posts after that with the specified tag
+        :param promoted: int 0 or 1
+                         0 for all posts
+                         1 for posts that have been in top
+        :return: str
+                 json reply from api
+        """
+
+        tags = tags.replace(" ", "+")
+
+        if older != 0:
+            r = get(self.items_url,
+                    params={'older': older, 'flags': flag, 'promoted': promoted, 'tags': tags},
+                    cookies=self.__login_cookie)
+        else:
+            r = get(self.items_url,
+                    params={'flags': flag, 'promoted': promoted, 'tags': tags},
+                    cookies=self.__login_cookie)
+
+        return r.content.decode('utf-8')
+
+    def get_item_info(self, item, flag=1):
         """
         Get item info from pr0gramm api
         For example:
@@ -243,15 +298,33 @@ class Api:
         return r.content.decode("utf-8")
 
     def get_newest_image(self, flag=1, promoted=0):
+        """
+        Gets the newest post either on /new (promoted=0) or /top (promoted=1)
+
+        Parameters
+        ----------
+        :param flag: TODO
+        :param promoted: int (0 or 1)
+                         0 for all posts
+                         1 for posts that have been in top
+        :return: str
+                 json reply from api
+        """
         r = get(self.items_url,
                 params={'flags': flag, 'promoted': promoted},
                 cookies=self.__login_cookie)
         return r.content.decode("utf-8")
 
-    def get_inbox(self):
-        r = get("https://pr0gramm.com/api/inbox/all",
-                params={},
-                cookies=self.__login_cookie)
+    def get_inbox(self, older=0):
+        r = ""
+        if older <= 0:
+            r = get("https://pr0gramm.com/api/inbox/all",
+                    params={},
+                    cookies=self.__login_cookie)
+        else:
+            r = get("https://pr0gramm.com/api/inbox/all",
+                    params={'older': older},
+                    cookies=self.__login_cookie)
         content = json.loads(r.content.decode("utf-8"))
         try:
             if content["code"] == 403:
