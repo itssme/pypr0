@@ -14,6 +14,8 @@ from api_exceptions import NotLoggedInException
 
 class Pr0grammApiTests(unittest.TestCase):
     login = False
+    USERNAME = ''
+    PASSWORD = ''
 
     def setUp(self):
         self.test_user = User("gamb", 1, 1482019580, 0, 0, 0, 0, 17000, 300, 1000, 100, 0)
@@ -24,8 +26,6 @@ class Pr0grammApiTests(unittest.TestCase):
         self.test_comment = Comment(1, "Han geblussert", self.test_post.id, self.test_user.name, 0, 1525174308, 4, 1,
                                     0.5, 0)
 
-        self.USERNAME = ""
-        self.PASSWORD = ""
         self.api = Api(self.USERNAME, self.PASSWORD, "./")
 
     def tearDown(self):
@@ -138,6 +138,9 @@ class Pr0grammApiTests(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    # for testing with login call like: "LOGIN="true" python tests.py"
+    # for testing with login call like: USERNAME="itssme" PASSWORD="1234" "LOGIN="true" python tests.py"
     Pr0grammApiTests.login = os.environ.get('LOGIN', Pr0grammApiTests.login)
+    Pr0grammApiTests.USERNAME = os.environ.get('USERNAME', Pr0grammApiTests.USERNAME)
+    Pr0grammApiTests.PASSWORD = os.environ.get('PASSWORD', Pr0grammApiTests.PASSWORD)
+
     unittest.main()
