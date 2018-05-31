@@ -1,7 +1,7 @@
 import os
 import sqlite3
 import threading
-from queue import Queue
+from multiprocessing import JoinableQueue
 
 
 class Manager(threading.Thread):
@@ -10,7 +10,7 @@ class Manager(threading.Thread):
         self.daemon = True
 
         self.file_name = file_name
-        self.sql_queue = Queue()
+        self.sql_queue = JoinableQueue()
 
         if not os.path.isfile(file_name):
             connection = sqlite3.connect(file_name)
