@@ -9,10 +9,10 @@ For Debian and Ubuntu users: <br>
 Then clone the repository <br>
 `git clone https://github.com/itssme/pr0gramm_crawler.git`
 
+---
 For running the tests go into the cloned folder <br>
 `cd python_pr0gramm_api`
 
----
 Run the tests with following command <br>
 `python tests.py`
 
