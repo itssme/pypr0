@@ -22,13 +22,6 @@ class ApiItem(dict):
     def __str__(self):
         return self.to_json()
 
-    def json_to_object(self, json_str="", json_obj=""):
-        if json_obj == "":
-            json_obj = json.loads(json_str)
-
-        for key, value in self:
-            self[key] = json_obj[key]
-
     def to_json(self):
         return json.dumps(self)
 
@@ -147,6 +140,7 @@ class Api:
         nsfl = 4
         nsfw + nsfl = 6
         sfw + nsfw + nsfl = 7
+        nsfp = 8
         sfw + nsfp = 9
         sfw + nsfp + nsfw = 11
         sfw + nsfp + nsfw + nsfl = 15

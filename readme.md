@@ -7,7 +7,7 @@ For Debian and Ubuntu users: <br>
 `pip install requests`
 
 Then clone the repository <br>
-`git clone https://github.com/itssme/pr0gramm_crawler.git`
+`git clone https://github.com/itssme/python_pr0gramm_api.git`
 
 ---
 For running the tests go into the cloned folder <br>
