@@ -211,7 +211,7 @@ class Api:
                       False for 'newer' posts
                       None for 'get'
         :param user: str
-                     used to get posts from a specified user
+                     get uploads from one specific user
         :return: str
                  json reply from api
         """
@@ -296,7 +296,7 @@ class Api:
                          0 for all posts
                          1 for posts that have been in top
         :param user: str
-                     Uploader of the posts
+                     get uploads from one specific user
         :return: str
                  json reply from api
         """
@@ -410,7 +410,12 @@ class Api:
         For example:
           'https://pr0gramm.com/api/profile/comments?name=itssme&before=1528718127'
 
-        :param user str
+        Parameters
+        ----------
+        :param user: str
+                     get uploads from one specific user
+        :param created: int
+                        Date of the comment
         :param older bool
                      None gets the newest comment
                      True gets all comments older than item
@@ -482,7 +487,7 @@ class Api:
                          0 for all posts
                          1 for posts that have been in top
         :param user: str
-                     Uploader of the posts
+                     get uploads from one specific user
         :return: str
                  json reply from api
         """
