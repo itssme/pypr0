@@ -136,8 +136,8 @@ todo
 
 ```python
 from api import Api
-Api("gamb", "adminadmin", "/tmp")
-if Api.login():
+api = Api("gamb", "adminadmin", "/tmp")
+if api.login():
     print "wow"
 else:
     print "failed to log in"

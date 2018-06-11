@@ -103,6 +103,32 @@ class Posts(list):
         return max
 
 
+class Comments(list):
+    def __init__(self, json_str=""):
+        super(Comments, self).__init__()
+
+        if json_str != "":
+            self.json = json.loads(json_str)
+            items = self.json["comments"]
+
+            for i in range(0, len(items)):
+                self.append(Comment(json_obj=items[i]))
+
+    def minDate(self):
+        min = self[0]["created"]
+        for elem in self:
+            if min > elem["created"]:
+                min = elem["created"]
+        return min
+
+    def maxDate(self):
+        max = self[0]["created"]
+        for elem in self:
+            if max < elem["created"]:
+                max = elem["created"]
+        return max
+
+
 class Api:
     def __init__(self, username="", password="", tmp_dir="./"):
         self.__password = password
@@ -115,9 +141,12 @@ class Api:
         self.image_url = 'http://img.pr0gramm.com/'
         self.api_url = 'http://pr0gramm.com/api/'
         self.login_url = 'https://pr0gramm.com/api/user/login/'
+        self.profile_comments = self.api_url + "profile/comments"
+        self.profile_user = self.api_url + "profile/info"
         self.items_url = self.api_url + 'items/get'
         self.item_url = self.api_url + 'items/info'
 
+        self.logged_in = False
         self.login()
 
     def __iter__(self):
@@ -126,7 +155,10 @@ class Api:
 
     def next(self):
         posts = Posts(self.get_items(self.__current))
-        self.__current = posts.minId()
+        try:
+            self.__current = posts.minId()
+        except IndexError:
+            raise StopIteration
         return posts
 
     @staticmethod
@@ -160,7 +192,7 @@ class Api:
 
         return flag
 
-    def get_items(self, item, flag=1, promoted=0, older=True):
+    def get_items(self, item, flag=1, promoted=0, older=True, user=None):
         """
         Gets items from the pr0gramm api
 
@@ -169,7 +201,8 @@ class Api:
         :param item: int or str
                      requested post for example: 2525097
         :param flag: int or str
-                     TODO
+                     see api.md for details
+                     call calculate_flag if you are not sure what flag to use
         :param promoted: int 0 or 1
                          0 for all posts
                          1 for posts that have been in top
@@ -177,6 +210,8 @@ class Api:
                       True for 'older' posts than the item requested
                       False for 'newer' posts
                       None for 'get'
+        :param user: str
+                     used to get posts from a specified user
         :return: str
                  json reply from api
         """
@@ -187,13 +222,55 @@ class Api:
         elif older is not None:
             get_type = 'newer'
 
-        r = get(self.items_url,
-                params={get_type: item, 'flags': flag, 'promoted': promoted},
-                cookies=self.__login_cookie)
+        if user is not None:
+            r = get(self.items_url,
+                    params={get_type: item, 'flags': flag, 'promoted': promoted},
+                    cookies=self.__login_cookie)
+        else:
+            r = get(self.items_url,
+                    params={get_type: item, 'flags': flag, 'promoted': promoted, 'user': user},
+                    cookies=self.__login_cookie)
 
         return r.content.decode('utf-8')
 
-    def get_items_by_tag(self, tags, flag=1, older=0, promoted=0):
+    def get_items_iterator(self, item=-1, flag=1, promoted=0, older=True, user=None):
+        class __items_iterator:
+            self.__current = -1
+
+            def __init__(self, api, item, flag=1, promoted=0, older=True, user=None):
+                self.item = item
+                self.api = api
+                self.flag = flag
+                self.older = older
+                self.promoted = promoted
+                self.user = user
+
+            def __iter__(self):
+                if self.item == -1:
+                    self.__current = Post(self.api.get_newest_image(flag=self.flag, promoted=self.promoted,
+                                                                    user=self.user))["id"]
+                else:
+                    self.__current = self.item
+
+                return self
+
+            def next(self):
+                posts = Posts(self.api.get_items(self.__current, self.flag, self.promoted, self.older, self.user))
+                if self.older:
+                    try:
+                        self.__current = posts.minId()
+                    except IndexError:
+                        raise StopIteration
+                else:
+                    try:
+                        self.__current = posts.maxId()
+                    except IndexError:
+                        raise StopIteration
+                return posts
+
+        return __items_iterator(self, item, flag, promoted, older, user)
+
+    def get_items_by_tag(self, tags, flag=1, older=-1, newer=-1, promoted=0, user=None):
         """
         Gets items with a specific tag from the pr0gramm api
 
@@ -205,30 +282,82 @@ class Api:
                                Will return all posts with the tags
                                'schmuserkadser' and 'blus'
         :param flag: int or str
-                     TODO
+                     see api.md for details
+                     call calculate_flag if you are not sure what flag to use
         :param older: int
                       Specifies the first post that will be returned from the api
                       For example: older=2525097 tags='schmuserkadser' will get
                                    the post '2525097' and all posts after that with the specified tag
+        :param newer: int
+                      Specifies the first post that will be returned from the api
+                        For example: older=2525097 tags='schmuserkadser' will get
+                                   the post '2525097' and all posts newer than '2525097' with the specified tag
         :param promoted: int 0 or 1
                          0 for all posts
                          1 for posts that have been in top
+        :param user: str
+                     Uploader of the posts
         :return: str
                  json reply from api
         """
 
         tags = tags.replace(" ", "+")
-
-        if older != 0:
-            r = get(self.items_url,
-                    params={'older': older, 'flags': flag, 'promoted': promoted, 'tags': tags},
-                    cookies=self.__login_cookie)
+        if older != -1:
+            params = {'older': older, 'flags': flag, 'promoted': promoted, 'tags': tags}
+        elif newer != -1:
+            params = {'newer': newer, 'flags': flag, 'promoted': promoted, 'tags': tags}
         else:
-            r = get(self.items_url,
-                    params={'flags': flag, 'promoted': promoted, 'tags': tags},
-                    cookies=self.__login_cookie)
+            params = {'flags': flag, 'promoted': promoted, 'tags': tags}
+        if user is not None:
+            params["user"] = user
+
+        r = get(self.items_url,
+                params=params,
+                cookies=self.__login_cookie)
 
         return r.content.decode('utf-8')
+
+    def get_items_by_tag_iterator(self, tags, flag=1, older=-1, newer=-1, promoted=0, user=None):
+        class __items_tag_iterator:
+            self.__current = -1
+
+            def __init__(self, tags, api, flag=1, older=0, promoted=0, user=None):
+                self.tags = tags
+                self.api = api
+                self.flag = flag
+                self.older = older
+                self.newer = newer
+                self.promoted = promoted
+                self.user = user
+
+            def __iter__(self):
+                if older != -1:
+                    self.__current = older
+                elif newer != -1:
+                    self.__current = newer
+                else:
+                    self.__current = Post(self.api.get_items_by_tag(self.tags, self.flag, self.older, self.promoted,
+                                                                    self.user))
+                    self.older = 1
+
+                return self
+
+            def next(self):
+                posts = Posts(self.api.get_items_by_tag(self.tags, flag=self.flag, newer=self.__current,
+                                                        promoted=self.promoted, user=self.user))
+                if older != -1:
+                    try:
+                        self.__current = posts.minId()
+                    except IndexError:
+                        raise StopIteration
+                else:
+                    try:
+                        self.__current = posts.maxId()
+                    except IndexError:
+                        raise StopIteration
+                return posts
+
+        return __items_tag_iterator(tags, self, flag, older, promoted, user)
 
     def get_item_info(self, item, flag=1):
         """
@@ -243,7 +372,8 @@ class Api:
         :param item: int or str
                      requested post for example: 2525097
         :param flag: int or str
-                     TODO
+                     see api.md for details
+                     call calculate_flag if you are not sure what flag to use
         :return: str
                  json reply from api
         """
@@ -253,22 +383,117 @@ class Api:
                 cookies=self.__login_cookie)
         return r.content.decode("utf-8")
 
-    def get_newest_image(self, flag=1, promoted=0):
+    def get_user_info(self, user, flag=1):
+        """
+        Get user info from pr0gramm api
+        For example:
+          'https://pr0gramm.com/api/profile/info?name=itssme'
+
+        Will return general info about a user
+
+        Parameters
+        ----------
+        :param user: str
+                     username for getting the user info
+        :return: str
+                 json reply from api
+        """
+
+        r = get(self.profile_user + "?user=" + user,
+                params={'flags': flag},
+                cookies=self.__login_cookie)
+        return r.content.decode("utf-8")
+
+    def get_user_comments(self, user, created=-1, older=True, flag=1):
+        """
+        Get comments
+        For example:
+          'https://pr0gramm.com/api/profile/comments?name=itssme&before=1528718127'
+
+        :param user str
+        :param older bool
+                     None gets the newest comment
+                     True gets all comments older than item
+                     False gets all comments newer than item
+        :return: str
+                 json reply from api
+        """
+
+        if older is None:
+            r = get(self.profile_user + "?name=" + user,
+                    params={'flags': flag},
+                    cookies=self.__login_cookie)
+        elif older:
+            r = get(self.profile_comments + "?name=" + user,
+                    params={'flags': flag, 'before': created},
+                    cookies=self.__login_cookie)
+        else:
+            r = get(self.profile_comments + "?name=" + user,
+                    params={'flags': flag, 'after': created},
+                    cookies=self.__login_cookie)
+        return r.content.decode("utf-8")
+
+    def get_user_comments_iterator(self, user, created=-1, older=True, flag=1):
+        class __user_comments_iterator:
+            self.__current = -1
+
+            def __init__(self, api, user, created=-1, older=True, flag=1):
+                self.created = created
+                self.api = api
+                self.older = older
+                self.user = user
+                self.flag = flag
+
+            def __iter__(self):
+                if self.created == -1:
+                    self.__current = Comments(self.api.get_user_comments(self.user, flag=self.flag,
+                                                                         older=None))[0]["created"] + 1
+                else:
+                    self.__current = self.created
+
+                return self
+
+            def next(self):
+                comments = Comments(self.api.get_user_comments(self.user, self.__current, self.older, self.flag))
+                if self.older:
+                    try:
+                        self.__current = comments.minDate()
+                    except IndexError:
+                        raise StopIteration
+                else:
+                    try:
+                        self.__current = comments.maxDate()
+                    except IndexError:
+                        raise StopIteration
+                return comments
+
+        return __user_comments_iterator(self, user, created, older, flag)
+
+    def get_newest_image(self, flag=1, promoted=0, user=None):
         """
         Gets the newest post either on /new (promoted=0) or /top (promoted=1)
 
         Parameters
         ----------
-        :param flag: TODO
+        :param flag: int or str
+                     see api.md for details
+                     call calculate_flag if you are not sure what flag to use
         :param promoted: int (0 or 1)
                          0 for all posts
                          1 for posts that have been in top
+        :param user: str
+                     Uploader of the posts
         :return: str
                  json reply from api
         """
-        r = get(self.items_url,
-                params={'flags': flag, 'promoted': promoted},
-                cookies=self.__login_cookie)
+        if user is None:
+            r = get(self.items_url,
+                    params={'flags': flag, 'promoted': promoted},
+                    cookies=self.__login_cookie)
+        else:
+            r = get(self.items_url,
+                    params={'flags': flag, 'promoted': promoted, 'user': user},
+                    cookies=self.__login_cookie)
         r = r.content.decode("utf8")
         r = json.dumps(json.loads(r)["items"][0])
         return r
@@ -301,6 +526,7 @@ class Api:
                 try:
                     with open(cookie_path, "r") as tmp_file:
                         self.__login_cookie = json.loads(tmp_file.read())
+                    self.logged_in = True
                     return True
                 except IOError:
                     print "Could not open cookie file %s", cookie_path
@@ -315,9 +541,12 @@ class Api:
                         temp_file.write(json.dumps(utils.dict_from_cookiejar(r.cookies)))
                 except IOError:
                     print 'Could not write cookie file %s', cookie_path
+                    self.logged_in = False
                     return False
             else:
-                print 'Login not possible. Only SFW images available.'
+                print 'Login not possible.'
+                self.logged_in = False
                 return False
 
+            self.logged_in = True
             return True

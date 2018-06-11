@@ -1,3 +1,4 @@
+# coding=utf-8
 import unittest
 import json
 import os
@@ -7,6 +8,7 @@ from api import Tag
 from api import Post
 from api import User
 from api import Comment
+from api import Comments
 from api import Posts
 from time import sleep
 from sql_manager import Manager
@@ -292,7 +294,7 @@ class Pr0grammApiTests(unittest.TestCase):
             includes_tag = False
             for j in range(0, len(post_info["tags"])):
                 tag = Tag(json_obj=post_info["tags"][j])
-                if tag["tag"].lower() == "schmuserkadser":
+                if "schmuserkadser" in tag["tag"].lower():
                     includes_tag = True
             assert includes_tag
 
@@ -337,6 +339,41 @@ class Pr0grammApiTests(unittest.TestCase):
         manager.insert(self.test_post)
         manager.safe_to_disk()
         sleep(2)
+
+    def test_items_by_tag_iterator(self):
+        all_posts = Posts()
+        for posts in self.api.get_items_by_tag_iterator("SFC"):
+            all_posts.extend(posts)
+            sleep(0.2)  # avoid 503 errors
+
+        upvotes = 0
+        downvotes = 0
+        for post in posts:
+            upvotes += post["up"]
+            downvotes -= post["down"]
+
+    def test_items_iterator(self):
+        all_posts = Posts()
+        counter = 0
+        for posts in self.api.get_items_iterator():
+            if counter >= 5:
+                break
+            counter += 1
+            all_posts.extend(posts)
+
+        for post in all_posts:
+            pass
+
+    def test_user_comments_iterator(self):
+        all_comments = Comments()
+        counter = 0
+        for comments in self.api.get_user_comments_iterator("itssme", flag=self.api.calculate_flag(sfw=True, nsfp=True,
+                                                                                              nsfw=True, nsfl=True)):
+            all_comments.extend(comments)
+
+        for comment in all_comments:
+            pass
+
 
 
 if __name__ == '__main__':
