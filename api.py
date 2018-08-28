@@ -61,6 +61,16 @@ class Comment(ApiItem):
 
 class CommentAssignment:
     def __init__(self, post, comment):
+        """
+        Links a comment to a post
+
+        Parameters
+        ----------
+        :param post: int
+                     id of an post
+        :param comment: int
+                        id of an comment
+        """
         self.post = post
         self.comment = comment
 
@@ -73,20 +83,23 @@ class Tag(ApiItem):
 
 class TagAssignment:
     def __init__(self, post, tag):
+        """
+        Links a tag to a post
+
+        Parameters
+        ----------
+        :param post: int
+                     id of an post
+        :param tag: int
+                    id of an tag
+        """
         self.post = post
         self.tag = tag
 
 
-class Posts(list):
-    def __init__(self, json_str=""):
-        super(Posts, self).__init__()
-
-        if json_str != "":
-            self.json = json.loads(json_str)
-            items = self.json["items"]
-
-            for i in range(0, len(items)):
-                self.append(Post(json_obj=items[i]))
+class ApiList(list):
+    def __init__(self):
+        super(ApiList, self).__init__()
 
     def minId(self):
         min = self[0]["id"]
@@ -102,18 +115,6 @@ class Posts(list):
                 max = elem["id"]
         return max
 
-
-class Comments(list):
-    def __init__(self, json_str=""):
-        super(Comments, self).__init__()
-
-        if json_str != "":
-            self.json = json.loads(json_str)
-            items = self.json["comments"]
-
-            for i in range(0, len(items)):
-                self.append(Comment(json_obj=items[i]))
-
     def minDate(self):
         min = self[0]["created"]
         for elem in self:
@@ -127,6 +128,52 @@ class Comments(list):
             if max < elem["created"]:
                 max = elem["created"]
         return max
+
+
+class Posts(ApiList):
+    def __init__(self, json_str=""):
+        super(Posts, self).__init__()
+
+        if json_str != "":
+            self.json = json.loads(json_str)
+            items = self.json["items"]
+
+            for i in xrange(0, len(items)):
+                self.append(Post(json_obj=items[i]))
+
+
+class Comments(ApiList):
+    def __init__(self, json_str=""):
+        super(Comments, self).__init__()
+
+        if json_str != "":
+            self.json = json.loads(json_str)
+            items = self.json["comments"]
+
+            for i in xrange(0, len(items)):
+                self.append(Comment(json_obj=items[i]))
+
+
+class CommentAssignments(list):
+    def __init__(self):
+        super(CommentAssignments, self).__init__()
+
+
+class Tags(ApiList):
+    def __init__(self, json_str=""):
+        super(Tags, self).__init__()
+
+        if json_str != "":
+            self.json = json.loads(json_str)
+            items = self.json["tags"]
+
+            for i in xrange(0, len(items)):
+                self.append(Tag(json_obj=items[i]))
+
+
+class TagAssignments(list):
+    def __init__(self):
+        super(TagAssignments, self).__init__()
 
 
 class Api:

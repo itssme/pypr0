@@ -50,8 +50,9 @@ create table comments (
 );
 
 create table comment_assignments (
-    id int primary key references comments,
-    post int references posts
+    post int references posts,
+    comment int references comments,
+    primary key(post, comment)
 );
 
 insert into comments values(0, Null, Null, 0, 0, 0, 0, 0, 0);
@@ -65,8 +66,8 @@ create table tags (
 
 create table tag_assignments (
     post int references posts,
-    id int references tags,
-    primary key(post, id)
+    tag int references tags,
+    primary key(post, tag)
 );
 
 commit;
