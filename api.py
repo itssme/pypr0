@@ -82,7 +82,7 @@ class Tag(ApiItem):
 
 
 class TagAssignment:
-    def __init__(self, post, tag):
+    def __init__(self, post, tag, confidence):
         """
         Links a tag to a post
 
@@ -92,9 +92,12 @@ class TagAssignment:
                      id of an post
         :param tag: int
                     id of an tag
+        :param confidence: float
+                           confidence of an tag
         """
         self.post = post
         self.tag = tag
+        self.confidence = confidence
 
 
 class ApiList(list):

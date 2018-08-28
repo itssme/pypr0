@@ -60,13 +60,13 @@ insert into comment_assignments values(Null, 0);
 
 create table tags (
     id integer primary key,
-    confidence float,
     tag varchar(256) unique
 );
 
 create table tag_assignments (
     post int references posts,
     tag int references tags,
+    confidence float,
     primary key(post, tag)
 );
 

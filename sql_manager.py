@@ -119,8 +119,8 @@ class Manager(threading.Thread):
             self.insert_comment_assignment(comment_assignment)
 
     def insert_tag_assignment(self, tag_assignment):
-        statement = "insert into tag_assignments values(?, ?)"
-        data = [tag_assignment.post, tag_assignment.tag]
+        statement = "insert into tag_assignments values(?, ?, ?)"
+        data = [tag_assignment.post, tag_assignment.tag, tag_assignment.confidence]
         self.sql_queue.put((statement, data, None))
 
     def insert_tag_assignments(self, tag_assignments):
@@ -144,7 +144,10 @@ class Manager(threading.Thread):
 
     def run(self):
         for query, values, token in iter(self.sql_queue.get, None):
-            print("Executing: " + query + "\n" + str(values) + "\nwith token: " + str(token))
-            self.sql_cursor.execute(query, values)
-            self.__results[token] = self.sql_cursor.fetchall()
-            self.sql_queue.task_done()
+            try:
+                print("Executing: " + query + "\n" + str(values) + "\nwith token: " + str(token))
+                self.sql_cursor.execute(query, values)
+                self.__results[token] = self.sql_cursor.fetchall()
+                self.sql_queue.task_done()
+            except Exception as e:
+                print(str(e))
