@@ -39,12 +39,7 @@ create table posts (
 
 create table comments (
     id integer primary key autoincrement,
-    comment text
-);
-
-create table comment_assignments (
-    id int primary key references comments,
-    post int references posts,
+    comment text,
     user varchar(256) references users,
     parent int references comments,
     created int,
@@ -54,8 +49,13 @@ create table comment_assignments (
     mark int
 );
 
-insert into comments values(0, Null);
-insert into comment_assignments values(0, Null, Null, 0, 0, 0, 0, 0, 0);
+create table comment_assignments (
+    id int primary key references comments,
+    post int references posts
+);
+
+insert into comments values(0, Null, Null, 0, 0, 0, 0, 0, 0);
+insert into comment_assignments values(0, Null);
 
 create table tags (
     id integer primary key,

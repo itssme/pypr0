@@ -118,6 +118,19 @@ class Pr0grammApiTests(unittest.TestCase):
         tag = tag.encode('utf8')
         self.test_tag = Tag(json_str=tag)
 
+        comment = '''
+            {
+              "id": 22737047,
+              "up": 3,
+              "down": 0,
+              "content": "enigma masterrace",
+              "created": 1529498954,
+              "itemId": 2611104,
+              "thumb": "2018\\/06\\/20\\/43add928c8babe8f.jpg"
+            }'''
+        comment = comment.encode('utf8')
+        self.test_comment = Comment(comment)
+
         posts = '''
             {
               "atEnd": true,
@@ -338,7 +351,21 @@ class Pr0grammApiTests(unittest.TestCase):
         manager = Manager("pr0gramm.db")
         manager.insert(self.test_post)
         manager.safe_to_disk()
+        print manager.sql_cursor.execute("select * from posts;").fetchall()
         sleep(2)
+        os.remove("pr0gramm.db")
+
+    def test_db_tags(self):
+        manager = Manager("pr0gramm.db")
+        manager.insert(self.test_tag)
+        manager.safe_to_disk()
+        print manager.manual_command("select * from tags;", wait=True)
+        sleep(2)
+        os.remove("pr0gramm.db")
+
+    def test_db_comments(self):
+        manager = Manager("pr0gramm.db")
+        manager.insert()
 
     def test_items_by_tag_iterator(self):
         all_posts = Posts()
@@ -373,7 +400,6 @@ class Pr0grammApiTests(unittest.TestCase):
 
         for comment in all_comments:
             pass
-
 
 
 if __name__ == '__main__':

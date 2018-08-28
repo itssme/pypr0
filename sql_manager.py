@@ -1,6 +1,7 @@
 import os
 import sqlite3
 import threading
+import uuid
 from multiprocessing import JoinableQueue
 
 
@@ -11,6 +12,7 @@ class Manager(threading.Thread):
 
         self.file_name = file_name
         self.sql_queue = JoinableQueue()
+        self.__results = {}
 
         if not os.path.isfile(file_name):
             connection = sqlite3.connect(file_name)
@@ -54,6 +56,7 @@ class Manager(threading.Thread):
             elif type == 'User':
                 self.insert_user(args[i])
             elif type == 'Comment':
+                print("comment")
                 self.insert_comment(args[i])
             elif type == 'Tag':
                 self.insert_tag(args[i])
@@ -67,19 +70,25 @@ class Manager(threading.Thread):
         data = [post["id"], post["user"], post["promoted"], post["up"], post["down"], post["created"], post["image"],
                 post["thumb"], post["fullsize"], post["width"], post["height"], post["audio"], post["source"],
                 post["flags"], post["mark"]]
-        self.sql_queue.put((statement, data))
+        self.sql_queue.put((statement, data, None))
 
     def insert_posts(self, posts):
-        pass
+        for post in posts:
+            self.insert_post(post)
 
     def insert_user(self, user):
         pass
 
     def insert_comment(self, comment):
-        pass
+        statement = "insert into comments values(" + "".join(["?," for key, value in comment.iteritems()])[:-1] + ")"
+        data = [comment["id"], comment["content"], comment["name"], comment["parent"], comment["created"],
+                comment["up"], comment["down"], comment["confidence"], comment["mark"]]
+        self.sql_queue.put((statement, data, None))
 
     def insert_tag(self, tag):
-        pass
+        statement = "insert into tags values(" + "".join(["?," for key, value in tag.iteritems()])[:-1] + ")"
+        data = [tag["id"], tag["confidence"], tag["tag"]]
+        self.sql_queue.put((statement, data, None))
 
     def insert_comment_assignment(self, comment_assignment):
         pass
@@ -87,7 +96,23 @@ class Manager(threading.Thread):
     def insert_tag_assignment(self, tag_assignment):
         pass
 
+    def manual_command(self, statement, values=[], wait=False):
+        token = uuid.uuid4() if wait else None
+        self.sql_queue.put((statement, values, token))
+        delay = .001
+
+        while wait:
+            if token in self.__results:
+                result = self.__results[token]
+                del self.__results[token]
+                return result
+
+            if delay < 8:
+                delay += delay
+
     def run(self):
-        for query, values in iter(self.sql_queue.get, None):
+        for query, values, token in iter(self.sql_queue.get, None):
+            print("Executing: " + query + "\n" + str(values) + "\nwith token: " + str(token))
             self.sql_cursor.execute(query, values)
+            self.__results[token] = self.sql_cursor.fetchall()
             self.sql_queue.task_done()
