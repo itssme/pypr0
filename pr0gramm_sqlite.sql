@@ -56,7 +56,7 @@ create table comment_assignments (
 );
 
 insert into comments values(0, Null, Null, 0, 0, 0, 0, 0, 0);
-insert into comment_assignments values(0, Null);
+insert into comment_assignments values(Null, 0);
 
 create table tags (
     id integer primary key,
