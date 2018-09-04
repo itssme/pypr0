@@ -11,7 +11,7 @@ jobs:
       - run:
           name: install dependencies
           command: |
-            pip install requests
+            sudo pip install requests
 
       - run:
           name: run tests
