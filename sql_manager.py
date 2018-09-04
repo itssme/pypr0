@@ -77,7 +77,7 @@ class Manager(threading.Thread):
         statement = "insert into posts values(" + "".join(["?," for key, value in post.iteritems()])[:-1] + ")"
         data = [post["id"], post["user"], post["promoted"], post["up"], post["down"], post["created"], post["image"],
                 post["thumb"], post["fullsize"], post["width"], post["height"], post["audio"], post["source"],
-                post["flags"], post["mark"]]
+                post["flags"], post["mark"], post["deleted"]]
         self.sql_queue.put((statement, data, None))
 
     def insert_posts(self, posts):
@@ -101,7 +101,7 @@ class Manager(threading.Thread):
             self.insert_comment(comment)
 
     def insert_tag(self, tag):
-        statement = "insert into tags values(" + "".join(["?," for key, value in tag.iteritems()])[:-1] + ")"
+        statement = "insert into tags values(?, ?, ?)"
         data = [tag["id"], tag["confidence"], tag["tag"]]
         self.sql_queue.put((statement, data, None))
 
@@ -119,8 +119,8 @@ class Manager(threading.Thread):
             self.insert_comment_assignment(comment_assignment)
 
     def insert_tag_assignment(self, tag_assignment):
-        statement = "insert into tag_assignments values(?, ?, ?)"
-        data = [tag_assignment.post, tag_assignment.tag, tag_assignment.confidence]
+        statement = "insert into tag_assignments values(?, ?)"
+        data = [tag_assignment.post, tag_assignment.tag]
         self.sql_queue.put((statement, data, None))
 
     def insert_tag_assignments(self, tag_assignments):
@@ -145,7 +145,6 @@ class Manager(threading.Thread):
     def run(self):
         for query, values, token in iter(self.sql_queue.get, None):
             try:
-                print("Executing: " + query + "\n" + str(values) + "\nwith token: " + str(token))
                 self.sql_cursor.execute(query, values)
                 self.__results[token] = self.sql_cursor.fetchall()
                 self.sql_queue.task_done()

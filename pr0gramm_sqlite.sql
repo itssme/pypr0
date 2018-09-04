@@ -3,7 +3,6 @@
 PRAGMA foreign_keys = ON;
 
 begin transaction;
-
 create table users (
     name varchar(256) primary key,
     id int,
@@ -34,11 +33,12 @@ create table posts (
     audio tinyint,
     source varchar(1024),
     flags int,
-    mark int
+    mark int,
+    deleted int
 );
 
 create table comments (
-    id integer primary key autoincrement,
+    id integer primary key,
     comment text,
     user varchar(256) references users,
     parent int references comments,
@@ -59,15 +59,15 @@ insert into comments values(0, Null, Null, 0, 0, 0, 0, 0, 0);
 insert into comment_assignments values(Null, 0);
 
 create table tags (
-    id integer primary key,
+    id integer primary key,  -- TODO make autoincrement again and fix bug with in-memory database
     tag varchar(256) unique
 );
 
 create table tag_assignments (
     post int references posts,
-    tag int references tags,
-    confidence float,
-    primary key(post, tag)
+    tag int primary key,
+    id int references tags,
+    confidence float
 );
 
 commit;
