@@ -101,8 +101,13 @@ class Manager(threading.Thread):
             self.insert_comment(comment)
 
     def insert_tag(self, tag):
-        statement = "insert into tags values(?, ?, ?)"
-        data = [tag["id"], tag["confidence"], tag["tag"]]
+        statement = "insert into tags values(?, ?)"
+        # for some reason the sqlite_sequence table is not created and autoincrement does not work TODO fix this
+        try:
+            number = self.manual_command("select max(id) from tags;", wait=True)[0][0] + 1
+        except TypeError:
+            number = 1
+        data = [number, tag["tag"]]
         self.sql_queue.put((statement, data, None))
 
     def insert_tags(self, tags):
@@ -119,9 +124,13 @@ class Manager(threading.Thread):
             self.insert_comment_assignment(comment_assignment)
 
     def insert_tag_assignment(self, tag_assignment):
-        statement = "insert into tag_assignments values(?, ?)"
-        data = [tag_assignment.post, tag_assignment.tag]
+        statement = "insert into tag_assignments values(?, ?, ?, ?)"
+        data = [tag_assignment.post, tag_assignment.id, tag_assignment.tag, tag_assignment.confidence]
         self.sql_queue.put((statement, data, None))
+
+    def insert_tag_assignments(self, tag_assignments):
+        for tag_assignment in tag_assignments:
+            self.insert_tag_assignment(tag_assignment)
 
     def insert_tag_assignments(self, tag_assignments):
         for tag_assignment in tag_assignments:

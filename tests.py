@@ -152,7 +152,8 @@ class Pr0grammApiTests(unittest.TestCase):
                   "source": "",
                   "flags": 1,
                   "user": "itssme",
-                  "mark": 0
+                  "mark": 0,
+                  "deleted": 0
                 },
                 {
                   "id": 2546035,
@@ -169,7 +170,8 @@ class Pr0grammApiTests(unittest.TestCase):
                   "source": "",
                   "flags": 1,
                   "user": "itssme",
-                  "mark": 0
+                  "mark": 0,
+                  "deleted": 0
                 }
               ],
               "ts": 1527768809,
