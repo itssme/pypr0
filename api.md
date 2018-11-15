@@ -38,6 +38,7 @@ https://pr0gramm.com/api/items/get?id=2525097&flags=9
       "up": 197,
       "down": 62,
       "created": 1524733667,
+      "deleted": 0,
       "image": "2018\\/04\\/26\\/c6b285ecd87367cb.jpg",
       "thumb": "2018\\/04\\/26\\/c6b285ecd87367cb.jpg",
       "fullsize": "2018\\/04\\/26\\/c6b285ecd87367cb.png",
@@ -85,6 +86,9 @@ A list containing `posts`
         Number of downvotes
         - `created:int` <br>
         A timestamp fot the creation of the post
+        - `deleted:int` <br>
+        Default value is 0 <br>
+        Will be set to 1 if the post is deleted
         - `image:str` <br>
         Image address for 
         https://img.pr0gramm.com/ <br>

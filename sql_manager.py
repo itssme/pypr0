@@ -7,10 +7,11 @@ from time import sleep
 
 
 class Manager(threading.Thread):
-    def __init__(self, file_name):
+    def __init__(self, file_name, in_memory=False):
         threading.Thread.__init__(self)
         self.daemon = True
 
+        self.in_memory = in_memory
         self.file_name = file_name
         self.sql_queue = JoinableQueue()
         self.__results = {}
@@ -28,24 +29,44 @@ class Manager(threading.Thread):
             connection.commit()
             connection.close()
 
-        self.sql_connection = sqlite3.connect(':memory:', check_same_thread=False, detect_types=sqlite3.PARSE_DECLTYPES)
-        old_db = sqlite3.connect(file_name)
-        query = "".join(line for line in old_db.iterdump())
-        self.sql_connection.executescript(query)
+        if self.in_memory:
+            self.sql_connection = sqlite3.connect(':memory:', check_same_thread=False,
+                                                  detect_types=sqlite3.PARSE_DECLTYPES)
+            old_db = sqlite3.connect(file_name)
+            query = ""
+            put_at_end = ""
+
+            # we have to do this because there is a bug in the sqlite.iterdump function when using autoincrement
+            for line in old_db.iterdump():
+                if '"sqlite_sequence"' in line:
+                    put_at_end += line
+                else:
+                    query += line
+
+            query += put_at_end
+            # query = "".join(line for line in old_db.iterdump())
+            self.sql_connection.executescript(query)
+        else:
+            self.sql_connection = sqlite3.connect(file_name, check_same_thread=False,
+                                                  detect_types=sqlite3.PARSE_DECLTYPES)
 
         self.sql_cursor = self.sql_connection.cursor()
 
         self.start()
         self.thread_running = True
 
-    # safe in-memory-database to disk
     def safe_to_disk(self):
-        if os.path.isfile(self.file_name):
-            os.remove(self.file_name)
-        new_db = sqlite3.connect(self.file_name)
-        query = "".join(line for line in self.sql_connection.iterdump())
-        new_db.executescript(query)
-        new_db.close()
+        # safe in-memory-database to disk
+        if self.in_memory:
+            self.sql_connection.commit()
+            if os.path.isfile(self.file_name):
+                os.remove(self.file_name)
+            new_db = sqlite3.connect(self.file_name)
+            query = "".join(line for line in self.sql_connection.iterdump())
+            new_db.executescript(query)
+            new_db.close()
+        else:
+            self.sql_connection.commit()
 
     def insert(self, *args):
         for i in xrange(0, len(args)):

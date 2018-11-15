@@ -192,8 +192,8 @@ class Api:
 
         self.tmp_dir = tmp_dir
 
-        self.image_url = 'http://img.pr0gramm.com/'
-        self.api_url = 'http://pr0gramm.com/api/'
+        self.image_url = 'https://img.pr0gramm.com/'
+        self.api_url = 'https://pr0gramm.com/api/'
         self.login_url = 'https://pr0gramm.com/api/user/login/'
         self.profile_comments = self.api_url + "profile/comments"
         self.profile_user = self.api_url + "profile/info"

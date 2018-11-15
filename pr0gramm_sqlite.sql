@@ -3,6 +3,7 @@
 PRAGMA foreign_keys = ON;
 
 begin transaction;
+
 create table users (
     name varchar(256) primary key,
     id int,
@@ -59,7 +60,7 @@ insert into comments values(0, Null, Null, 0, 0, 0, 0, 0, 0);
 insert into comment_assignments values(Null, 0);
 
 create table tags (
-    id integer primary key,  -- TODO make autoincrement again and fix bug with in-memory database
+    id integer primary key AUTOINCREMENT,
     tag varchar(256) unique
 );
 
