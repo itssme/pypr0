@@ -26,6 +26,7 @@ class Pr0grammApiTests(unittest.TestCase):
         Also initializes the api and logs in if LOGIN is set.
 
         Static objects for testing:
+        self.test_user
         self.test_tag
         self.test_posts
         self.test_post
@@ -120,13 +121,15 @@ class Pr0grammApiTests(unittest.TestCase):
 
         comment = '''
             {
-              "id": 22737047,
-              "up": 3,
+              "id": 25767939,
+              "parent": 0,
+              "content": "Endlich auch mal Teil von etwas sein",
+              "created": 1542542614,
+              "up": 2,
               "down": 0,
-              "content": "enigma masterrace",
-              "created": 1529498954,
-              "itemId": 2611104,
-              "thumb": "2018\\/06\\/20\\/43add928c8babe8f.jpg"
+              "confidence": 0.342372,
+              "name": "Doryani",
+              "mark": 10
             }'''
         comment = comment.encode('utf8')
         self.test_comment = Comment(comment)
@@ -194,8 +197,7 @@ class Pr0grammApiTests(unittest.TestCase):
 
     def test_getUrl(self):
         api = Api("", "", "./doesNotExist")
-        api.get_items("2504967")
-        assert True
+        assert api.get_items("2504967")
 
     def test_login1(self):
         if not self.login:
@@ -230,8 +232,7 @@ class Pr0grammApiTests(unittest.TestCase):
         json_str = api.get_items(2525097, older=None)
         posts_obj = Posts(json_str)
         for elem in posts_obj:
-            pass
-        self.assertTrue(True)
+            assert elem["id"]
 
     # POST OBJECT TESTS
 
@@ -333,7 +334,7 @@ class Pr0grammApiTests(unittest.TestCase):
             sleep(0.2)  # avoid 503 errors
             if counter >= 5:
                 break
-        assert True
+        assert len(all_posts) > 0
 
     def test_calculate_flags(self):
         assert Api.calculate_flag(sfw=True) == 1
@@ -353,21 +354,25 @@ class Pr0grammApiTests(unittest.TestCase):
         manager = Manager("pr0gramm.db")
         manager.insert(self.test_post)
         manager.safe_to_disk()
-        print manager.sql_cursor.execute("select * from posts;").fetchall()
-        sleep(2)
+        assert manager.manual_command("select * from posts;", wait=True)
+        manager.safe_to_disk()
         os.remove("pr0gramm.db")
 
     def test_db_tags(self):
         manager = Manager("pr0gramm.db")
         manager.insert(self.test_tag)
         manager.safe_to_disk()
-        print manager.manual_command("select * from tags;", wait=True)
-        sleep(2)
+        assert manager.manual_command("select * from tags;", wait=True)
+        manager.safe_to_disk()
         os.remove("pr0gramm.db")
 
     def test_db_comments(self):
         manager = Manager("pr0gramm.db")
-        manager.insert()
+        manager.insert(self.test_comment)
+        manager.safe_to_disk()
+        assert manager.manual_command("select * from comments;", wait=True)
+        manager.safe_to_disk()
+        os.remove("pr0gramm.db")
 
     def test_items_by_tag_iterator(self):
         all_posts = Posts()
@@ -381,27 +386,44 @@ class Pr0grammApiTests(unittest.TestCase):
             upvotes += post["up"]
             downvotes -= post["down"]
 
+        # it is impossible that the sfc gets minus!
+        assert upvotes > downvotes
+
     def test_items_iterator(self):
         all_posts = Posts()
         counter = 0
-        for posts in self.api.get_items_iterator():
+        for posts in self.api.get_items_iterator(promoted=1):
             if counter >= 5:
                 break
             counter += 1
             all_posts.extend(posts)
 
+        assert len(all_posts) > 0
+
+        upvotes = 0
+        downvotes = 0
         for post in all_posts:
-            pass
+            upvotes += post["up"]
+            downvotes -= post["down"]
+
+        assert upvotes > 0
+        assert (upvotes-downvotes) > 0
 
     def test_user_comments_iterator(self):
         all_comments = Comments()
         counter = 0
         for comments in self.api.get_user_comments_iterator("itssme", flag=self.api.calculate_flag(sfw=True, nsfp=True,
                                                                                               nsfw=True, nsfl=True)):
+            if counter >= 5:
+                break
+            counter += 1
             all_comments.extend(comments)
 
         for comment in all_comments:
-            pass
+            assert comment["itemId"]
+            assert comment["id"]
+
+        assert len(all_comments) > 0
 
 
 if __name__ == '__main__':
