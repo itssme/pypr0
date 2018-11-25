@@ -362,7 +362,9 @@ class Pr0grammApiTests(unittest.TestCase):
         manager = Manager("pr0gramm.db")
         manager.insert(self.test_tag)
         manager.safe_to_disk()
-        assert manager.manual_command("select * from tags;", wait=True)
+        result = manager.manual_command("select * from tags;", wait=True)
+        assert result[0][0] == 1
+        assert result[0][1] == "schmuserkadser"
         manager.safe_to_disk()
         os.remove("pr0gramm.db")
 
@@ -382,7 +384,7 @@ class Pr0grammApiTests(unittest.TestCase):
 
         upvotes = 0
         downvotes = 0
-        for post in posts:
+        for post in all_posts:
             upvotes += post["up"]
             downvotes -= post["down"]
 

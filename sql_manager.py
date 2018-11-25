@@ -123,12 +123,7 @@ class Manager(threading.Thread):
 
     def insert_tag(self, tag):
         statement = "insert into tags values(?, ?)"
-        # for some reason the sqlite_sequence table is not created and autoincrement does not work TODO fix this
-        try:
-            number = self.manual_command("select max(id) from tags;", wait=True)[0][0] + 1
-        except TypeError:
-            number = 1
-        data = [number, tag["tag"]]
+        data = [None, tag["tag"]]
         self.sql_queue.put((statement, data, None))
 
     def insert_tags(self, tags):
@@ -173,10 +168,13 @@ class Manager(threading.Thread):
             sleep(delay)
 
     def run(self):
-        for query, values, token in iter(self.sql_queue.get, None):
-            try:
-                self.sql_cursor.execute(query, values)
-                self.__results[token] = self.sql_cursor.fetchall()
-                self.sql_queue.task_done()
-            except Exception as e:
-                print(str(e))
+        try:
+            for query, values, token in iter(self.sql_queue.get, None):
+                try:
+                    self.sql_cursor.execute(query, values)
+                    self.__results[token] = self.sql_cursor.fetchall()
+                    self.sql_queue.task_done()
+                except Exception as e:
+                    print(str(e))
+        except EOFError:
+            self.thread_running = False

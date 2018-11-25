@@ -76,9 +76,16 @@ class CommentAssignment:
 
 
 class Tag(ApiItem):
-    def __init__(self, json_str="", json_obj="", tag_assignment=None):
+    def __init__(self, json_str="", json_obj=""):
+        """
+        A tag from an post
+
+        Parameters
+        ----------
+        :param json_str:
+        :param json_obj:
+        """
         super(Tag, self).__init__(json_str, json_obj)
-        self.tag_assignment = tag_assignment
 
 
 class TagAssignment:
@@ -93,7 +100,7 @@ class TagAssignment:
         :param id: int
                     id of an tag
         :param tag: int
-                    id of an save tag in the db
+                    id of an saved tag in the db
         :param confidence: float
                            confidence of an tag
 
@@ -231,6 +238,8 @@ class Api:
         sfw + nsfp + nsfw = 11
         sfw + nsfp + nsfw + nsfl = 15
 
+        Parameters
+        ----------
         :param sfw: bool
         :param nsfp: bool
         :param nsfw: bool
@@ -558,6 +567,17 @@ class Api:
         return r
 
     def get_inbox(self, older=0):
+        """
+        login required
+        Gets messages from inbox
+
+        Parameters
+        ----------
+        :param older: int
+                      Gets the next messages after 'older'
+        :return: json
+                 Returns messages
+        """
         r = ""
         if older <= 0:
             r = get("https://pr0gramm.com/api/inbox/all",
@@ -576,6 +596,16 @@ class Api:
         return r.content.decode("utf-8")
 
     def login(self):
+        """
+        Logs in with a specific account
+
+        Parameters
+        ----------
+        :return: bool
+                 True if login was successful
+                 False if login failed
+        """
+
         if self.__password != "" and self.__username != "":
             cookie_path = os.path.join(self.tmp_dir, "cookie.json")
 
