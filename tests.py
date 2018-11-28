@@ -427,6 +427,22 @@ class Pr0grammApiTests(unittest.TestCase):
 
         assert len(all_comments) > 0
 
+    def test_get_message(self):  # this test will only work with my login (circle-ci tests with my login)
+        if self.login:
+            messages = json.loads(self.api.get_messages_with_user("froschler"))
+            assert len(messages["messages"]) >= 2
+            message1 = 1524674144
+            message2 = 1524672178
+            for msg in messages["messages"]:
+                if msg["created"] == message1:
+                    assert msg["sent"] == 1
+                    assert msg["senderName"] == "itssme"
+                    assert msg["id"] == 2091064
+                elif msg["created"] == message2:
+                    assert msg["sent"] == 0
+                    assert msg["senderName"] == "froschler"
+                    assert msg["id"] == 2091036
+
 
 if __name__ == '__main__':
     # for testing with login call like: USERNAME="itssme" PASSWORD="1234" "LOGIN="true" python tests.py"

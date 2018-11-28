@@ -574,7 +574,7 @@ class Api:
         Parameters
         ----------
         :param older: int
-                      Gets the next messages after 'older'
+                      gets the next messages after 'older'
         :return: json
                  Returns messages
         """
@@ -587,6 +587,37 @@ class Api:
             r = get("https://pr0gramm.com/api/inbox/all",
                     params={'older': older},
                     cookies=self.__login_cookie)
+        content = json.loads(r.content.decode("utf-8"))
+        try:
+            if content["code"] == 403:
+                raise NotLoggedInException()
+        except KeyError:
+            pass
+        return r.content.decode("utf-8")
+
+    def get_messages_with_user(self, user, older=None):
+        """
+        Gets messages from a specific user
+
+        Parameters
+        ----------
+        :param user: str
+                     username from the other user
+        :param older: int, str
+                      messages older than this id will be returned
+        :return: json
+                 Returns messages from a specified user
+        """
+        r = ""
+        if older is None:
+            r = get("https://pr0gramm.com/api/inbox/messages",
+                    params={"with": user},
+                    cookies=self.__login_cookie)
+        else:
+            r = get("https://pr0gramm.com/api/inbox/messages",
+                    params={"with": user, "older": id},
+                    cookies=self.__login_cookie)
+
         content = json.loads(r.content.decode("utf-8"))
         try:
             if content["code"] == 403:
