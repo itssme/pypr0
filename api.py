@@ -115,33 +115,31 @@ class ApiList(list):
     def __init__(self):
         super(ApiList, self).__init__()
 
-    def minId(self):
-        min = self[0]["id"]
+    def min(self, attr):
+        min = self[0][attr]
         for elem in self:
-            if min > elem["id"]:
-                min = elem["id"]
+            if min > elem[attr]:
+                min = elem[attr]
         return min
+
+    def max(self, attr):
+        max = self[0][attr]
+        for elem in self:
+            if max < elem[attr]:
+                max = elem[attr]
+        return max
+
+    def minId(self):
+        return self.min("id")
 
     def maxId(self):
-        max = self[0]["id"]
-        for elem in self:
-            if max < elem["id"]:
-                max = elem["id"]
-        return max
+        return self.max("id")
 
     def minDate(self):
-        min = self[0]["created"]
-        for elem in self:
-            if min > elem["created"]:
-                min = elem["created"]
-        return min
+        return self.min("created")
 
     def maxDate(self):
-        max = self[0]["created"]
-        for elem in self:
-            if max < elem["created"]:
-                max = elem["created"]
-        return max
+        return self.max("created")
 
 
 class Posts(ApiList):
@@ -154,6 +152,18 @@ class Posts(ApiList):
 
             for i in xrange(0, len(items)):
                 self.append(Post(json_obj=items[i]))
+
+    def minPromotedId(self):
+        return self.min("promoted")
+
+    def maxPromotedId(self):
+        return self.max("promoted")
+
+    def sumPoints(self):
+        sum = 0
+        for post in self:
+            sum += (post["up"]-post["down"])
+        return sum
 
 
 class Comments(ApiList):
@@ -321,12 +331,18 @@ class Api:
                 posts = Posts(self.api.get_items(self.__current, self.flag, self.promoted, self.older, self.user))
                 if self.older:
                     try:
-                        self.__current = posts.minId()
+                        if self.promoted == 1:
+                            self.__current = posts.minPromotedId()
+                        else:
+                            self.__current = posts.minId()
                     except IndexError:
                         raise StopIteration
                 else:
                     try:
-                        self.__current = posts.maxId()
+                        if self.promoted == 1:
+                            self.__current = posts.maxPromotedId()
+                        else:
+                            self.__current = posts.maxId()
                     except IndexError:
                         raise StopIteration
                 return posts
@@ -410,12 +426,18 @@ class Api:
                                                         promoted=self.promoted, user=self.user))
                 if older != -1:
                     try:
-                        self.__current = posts.minId()
+                        if self.promoted == 1:
+                            self.__current = posts.minPromotedId()
+                        else:
+                            self.__current = posts.minId()
                     except IndexError:
                         raise StopIteration
                 else:
                     try:
-                        self.__current = posts.maxId()
+                        if self.promoted == 1:
+                            self.__current = posts.maxPromotedId()
+                        else:
+                            self.__current = posts.maxId()
                     except IndexError:
                         raise StopIteration
                 return posts
