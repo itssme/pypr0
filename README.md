@@ -1,17 +1,23 @@
 # Python api for pr0gramm.com
 
-## How to use
+## Installation
+
+### Pip
+
+`pip install pypr0`
+
+### Manually
 
 For Debian and Ubuntu users: <br>
 `apt install python python-pip` <br>
 `pip install requests`
 
 Then clone the repository <br>
-`git clone https://github.com/itssme/python_pr0gramm_api.git`
+`git clone https://github.com/itssme/pypr0.git`
 
 ---
 For running the tests go into the cloned folder <br>
-`cd python_pr0gramm_api`
+`cd pypr0`
 
 Run the tests with following command <br>
 `python tests.py`

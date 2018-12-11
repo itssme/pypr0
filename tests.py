@@ -1,18 +1,10 @@
 # coding=utf-8
 import unittest
-import json
-import os
 from os import remove
-from api import Api
-from api import Tag
-from api import Post
-from api import User
-from api import Comment
-from api import Comments
-from api import Posts
+from pr0gramm import *
 from time import sleep
-from sql_manager import Manager
-from api_exceptions import NotLoggedInException
+from pr0gramm.sql_manager import Manager
+from pr0gramm.api_exceptions import NotLoggedInException
 
 
 class Pr0grammApiTests(unittest.TestCase):

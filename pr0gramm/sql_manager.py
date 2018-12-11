@@ -7,7 +7,7 @@ from time import sleep
 
 
 class Manager(threading.Thread):
-    def __init__(self, file_name, in_memory=False):
+    def __init__(self, file_name, in_memory=False, sql_file=None):
         threading.Thread.__init__(self)
         self.daemon = True
 
@@ -20,7 +20,15 @@ class Manager(threading.Thread):
             connection = sqlite3.connect(file_name)
             cur = connection.cursor()
 
-            sql = open("pr0gramm_sqlite.sql")
+            _SQLFILE = ""
+            if sql_file is None:
+                _HERE = os.path.dirname(os.path.abspath(__file__))
+                _SQLFILE = os.path.join(_HERE, "pr0gramm_sqlite.sql")
+            else:
+                _SQLFILE = sql_file
+
+            sql = open(_SQLFILE)
+
             sql_str = sql.read()
             sql.close()
             cur.executescript(sql_str)
