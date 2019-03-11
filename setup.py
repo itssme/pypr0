@@ -1,11 +1,11 @@
 import setuptools
 
-with open("README.md", "r") as fh:
+with open("readme.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name="pypr0",
-    version="0.1.0",
+    version="0.1.1",
     author="itssme",
     author_email="itssme3000@gmail.com",
     description="Implementation of the pr0gramm api in python",
