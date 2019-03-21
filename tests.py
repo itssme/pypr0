@@ -404,20 +404,21 @@ class Pr0grammApiTests(unittest.TestCase):
         assert (upvotes-downvotes) > 0
 
     def test_user_comments_iterator(self):
-        all_comments = Comments()
-        counter = 0
-        for comments in self.api.get_user_comments_iterator("itssme", flag=self.api.calculate_flag(sfw=True, nsfp=True,
-                                                                                              nsfw=True, nsfl=True)):
-            if counter >= 5:
-                break
-            counter += 1
-            all_comments.extend(comments)
+        if self.login:
+            all_comments = Comments()
+            counter = 0
+            for comments in self.api.get_user_comments_iterator("itssme", flag=self.api.calculate_flag(sfw=True, nsfp=False,
+                                                                                                  nsfw=False, nsfl=False)):
+                if counter >= 5:
+                    break
+                counter += 1
+                all_comments.extend(comments)
 
-        for comment in all_comments:
-            assert comment["itemId"]
-            assert comment["id"]
+            for comment in all_comments:
+                assert comment["itemId"]
+                assert comment["id"]
 
-        assert len(all_comments) > 0
+            assert len(all_comments) > 0
 
     def test_get_message(self):  # this test will only work with my login (circle-ci tests with my login)
         if self.login:

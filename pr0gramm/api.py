@@ -1,7 +1,7 @@
 import json
 import os
 from requests import get, post, utils
-from api_exceptions import NotLoggedInException
+from api_exceptions import NotLoggedInException, RateLimitReached
 
 
 # TODO: implement logging
@@ -162,7 +162,7 @@ class Posts(ApiList):
     def sumPoints(self):
         sum = 0
         for post in self:
-            sum += (post["up"]-post["down"])
+            sum += (post["up"] - post["down"])
         return sum
 
 
@@ -491,6 +491,7 @@ class Api:
 
     def get_user_comments(self, user, created=-1, older=True, flag=1):
         """
+        login required
         Get comments
         For example:
           'https://pr0gramm.com/api/profile/comments?name=itssme&before=1528718127'
@@ -521,6 +522,13 @@ class Api:
             r = get(self.profile_comments + "?name=" + user,
                     params={'flags': flag, 'after': created},
                     cookies=self.__login_cookie)
+
+        try:
+            if r.content["code"] == 403:
+                raise NotLoggedInException()
+        except KeyError:
+            pass
+
         return r.content.decode("utf-8")
 
     def get_user_comments_iterator(self, user, created=-1, older=True, flag=1):
@@ -536,8 +544,11 @@ class Api:
 
             def __iter__(self):
                 if self.created == -1:
-                    self.__current = Comments(self.api.get_user_comments(self.user, flag=self.flag,
-                                                                         older=None))[0]["created"] + 1
+                    try:
+                        self.__current = Comments(self.api.get_user_comments(self.user, flag=self.flag,
+                                                                             older=None))[0]["created"] + 1
+                    except IndexError:
+                        raise NotLoggedInException
                 else:
                     self.__current = self.created
 
@@ -675,6 +686,12 @@ class Api:
 
             print "Logging in via request."
             r = post(self.login_url, data={'name': self.__username, 'password': self.__password})
+
+            try:
+                if r.json()["code"] == 429:  # rate limit reached (tried to log in too often)
+                    raise RateLimitReached
+            except KeyError:
+                pass
 
             if r.json()['success']:
                 self.__login_cookie = r.cookies
