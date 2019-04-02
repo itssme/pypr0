@@ -27,5 +27,10 @@ For running tests with login <br>
 
 
 ---
+## Examples
+For examples see this repository: https://github.com/itssme/pypr0-examples
+
+---
+
 ### CircleCI build
 [![CircleCI](https://circleci.com/gh/itssme/pypr0.svg?style=svg&circle-token=87c5fd78b5010d4e2c26dc9c2a385ed40be57818)](https://circleci.com/gh/itssme/python_pr0gramm_api)
