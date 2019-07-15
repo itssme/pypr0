@@ -2,6 +2,7 @@ import json
 import os
 from requests import get, post, utils
 from api_exceptions import NotLoggedInException, RateLimitReached
+from urllib import unquote
 
 
 # TODO: implement logging
@@ -658,6 +659,58 @@ class Api:
         except KeyError:
             pass
         return r.content.decode("utf-8")
+
+    def vote_post(self, id, vote):
+        """
+        Vote for a post with a specific id
+
+        Parameters
+        ----------
+        :param id: int, str
+                   post id that will be voted for
+        :param vote: int, str
+                     type of vote:
+                        -1 = -
+                        0 = unvote (nothing)
+                        1 = +
+                        2 = add to favorite
+        :return: bool
+                 returns true if the vote was successful else false
+        """
+        if self.logged_in:
+            nonce = json.loads(unquote(self.__login_cookie["me"]).decode('utf8'))["id"][0:16]
+            r = post(self.api_url + "items/vote",
+                    data={"id": id, "vote": vote, '_nonce': nonce},
+                    cookies=self.__login_cookie)
+            return True
+        else:
+            return False
+
+    def vote_comment(self, id, vote):
+        """
+        Vote for a comment with a specific id
+
+        Parameters
+        ----------
+        :param id: int, str
+                   comment id that will be voted for
+        :param vote: int, str
+                     type of vote:
+                        -1 = -
+                        0 = unvote (nothing)
+                        1 = +
+                        2 = add to favorite
+        :return: bool
+                 returns true if the vote was successful else false
+        """
+        if self.logged_in:
+            nonce = json.loads(unquote(self.__login_cookie["me"]).decode('utf8'))["id"][0:16]
+            r = post(self.api_url + "comments/vote",
+                     data={"id": id, "vote": vote, '_nonce': nonce},
+                     cookies=self.__login_cookie)
+            return True
+        else:
+            return False
 
     def login(self):
         """
