@@ -1,3 +1,4 @@
+import base64
 import json
 import os
 from requests import get, post, utils
@@ -737,8 +738,28 @@ class Api:
                 except IOError:
                     print "Could not open cookie file %s", cookie_path
 
-            print "Logging in via request."
-            r = post(self.login_url, data={'name': self.__username, 'password': self.__password})
+            r = ""
+            logged_in = False
+            while not logged_in:
+                print "Trying to login in via request."
+
+                captcha_req = get(self.api_url + "user/captcha")
+                token = captcha_req.json()["token"]
+                image = captcha_req.json()["captcha"].split("base64,")[-1]
+                write_img = open("captcha.png", "wb")
+                write_img.write(base64.decodestring(image))
+                write_img.close()
+                print "Open the image 'captcha.png' and write the correct content into the command line:"
+
+                captcha = raw_input("?: ")
+
+                r = post(self.login_url, data={'name': self.__username, 'password': self.__password,
+                                               'captcha': captcha, 'token': token})
+
+                if not r.json()["success"]:
+                    print "There was an error logging in: " + str(r.json()["error"])
+                else:
+                    logged_in = True
 
             try:
                 if r.json()["code"] == 429:  # rate limit reached (tried to log in too often)
