@@ -5,7 +5,7 @@ with open("readme.md", "r") as fh:
 
 setuptools.setup(
     name="pypr0",
-    version="0.1.2",
+    version="0.1.3",
     author="itssme",
     author_email="itssme3000@gmail.com",
     description="Implementation of the pr0gramm api in python",
