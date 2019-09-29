@@ -1,6 +1,7 @@
 import base64
 import json
 import os
+import webbrowser
 from requests import get, post, utils
 from api_exceptions import NotLoggedInException, RateLimitReached
 from urllib import unquote
@@ -749,7 +750,14 @@ class Api:
                 write_img = open("captcha.png", "wb")
                 write_img.write(base64.decodestring(image))
                 write_img.close()
-                print "Open the image 'captcha.png' and write the correct content into the command line:"
+
+                try:
+                    webbrowser.open("captcha.png")
+                    print "Your webbrowser or image viewer should open and display the image"
+                    print "write the correct content of the captcha into the command line:"
+                except:
+                    print "Could not open image through xdg-open"
+                    print "Open the image 'captcha.png' and write the correct content into the command line:"
 
                 captcha = raw_input("?: ")
 
@@ -781,5 +789,6 @@ class Api:
                 self.logged_in = False
                 return False
 
+            print "Successfully logged in and written cookie file"
             self.logged_in = True
             return True
