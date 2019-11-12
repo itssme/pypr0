@@ -106,7 +106,7 @@ class Manager(threading.Thread):
         statement = "insert into posts values(" + "".join(["?," for key, value in post.iteritems()])[:-1] + ")"
         data = [post["id"], post["user"], post["promoted"], post["up"], post["down"], post["created"], post["image"],
                 post["thumb"], post["fullsize"], post["width"], post["height"], post["audio"], post["source"],
-                post["flags"], post["mark"], post["deleted"]]
+                post["flags"], post["mark"], post["deleted"], post["userId"], post["gift"]]
         self.sql_queue.put((statement, data, None))
 
     def insert_posts(self, posts):

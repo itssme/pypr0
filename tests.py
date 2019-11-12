@@ -148,7 +148,9 @@ class Pr0grammApiTests(unittest.TestCase):
                   "flags": 1,
                   "user": "itssme",
                   "mark": 0,
-                  "deleted": 0
+                  "deleted": 0,
+                  "userId": 315478,
+                  "gift": 0
                 },
                 {
                   "id": 2546035,
@@ -166,7 +168,9 @@ class Pr0grammApiTests(unittest.TestCase):
                   "flags": 1,
                   "user": "itssme",
                   "mark": 0,
-                  "deleted": 0
+                  "deleted": 0,
+                  "userId": 315478,
+                  "gift": 0
                 }
               ],
               "ts": 1527768809,
@@ -240,7 +244,7 @@ class Pr0grammApiTests(unittest.TestCase):
                    '"image":"2018\/05\/01\/a0ef51790449af5f.mp4","thumb":"2018\/05\/01\/a0ef51790449af5f.jpg",' \
                    '"fullsize":"","width":640,"height":426,"audio":true,' \
                    '"source":"","flags":1,' \
-                   '"user":"virtuel","mark":0} '
+                   '"user":"virtuel","mark":0, "userId": 1, "gift": 0} '
         test_post_2 = Post(json_str=json_str)
         test_json_str = test_post_2.to_json()
         obj1 = json.loads(test_json_str)
