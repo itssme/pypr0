@@ -101,6 +101,8 @@ class Manager(threading.Thread):
                 self.insert_tag_assignment(args[i])
             elif type == "TagAssignments":
                 self.insert_tag_assignments(args[i])
+            else:
+                raise LookupError
 
     def insert_post(self, post):
         statement = "insert into posts values(" + "".join(["?," for key, value in post.iteritems()])[:-1] + ")"

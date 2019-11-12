@@ -440,6 +440,16 @@ class Pr0grammApiTests(unittest.TestCase):
                     assert msg["senderName"] == "froschler"
                     assert msg["id"] == 2091036
 
+    def test_post_insert(self):
+        post = Post(self.api.get_newest_image())
+
+        manager = Manager("pr0gramm.db")
+        manager.insert(post)
+        manager.safe_to_disk()
+        result = manager.manual_command("select count(*) from posts;", wait=True)
+        assert result[0][0] == 1
+        os.remove("pr0gramm.db")
+
 
 if __name__ == '__main__':
     # for testing with login call like: USERNAME="itssme" PASSWORD="1234" "LOGIN="true" python tests.py"
