@@ -1,7 +1,12 @@
 import setuptools
 
-with open("readme.md", "r") as fh:
-    long_description = fh.read()
+base_dir = os.path.dirname(__file__)
+readme_path = join(base_dir, "readme.md")
+if exists(readme_path):
+    with open(readme_path) as stream:
+        long_description = stream.read()
+else:
+    long_description = ""
 
 setuptools.setup(
     name="pypr0",
