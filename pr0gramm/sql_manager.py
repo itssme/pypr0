@@ -77,7 +77,7 @@ class Manager(threading.Thread):
             self.sql_connection.commit()
 
     def insert(self, *args):
-        for i in xrange(0, len(args)):
+        for i in range(0, len(args)):
             type = args[i].__class__.__name__
             if type == 'Post':
                 self.insert_post(args[i])
@@ -116,13 +116,13 @@ class Manager(threading.Thread):
             self.insert_post(post)
 
     def insert_user(self, user):
-        statement = "insert into posts values(" + "".join(["?," for key, value in user.iteritems()])[:-1] + ")"
+        statement = "insert into posts values(" + "".join(["?," for key, value in user.items()])[:-1] + ")"
         data = [user["name"], user["id"], user["registered"], user["admin"], user["banned"], user["bannedUntil"],
                 user["mark"], user["score"], user["tags"], user["likes"], user["comments"], user["followers"]]
         self.sql_queue.put((statement, data, None))
 
     def insert_comment(self, comment):
-        statement = "insert into comments values(" + "".join(["?," for key, value in comment.iteritems()])[:-1] + ")"
+        statement = "insert into comments values(" + "".join(["?," for key, value in comment.items()])[:-1] + ")"
         data = [comment["id"], comment["content"], comment["name"], comment["parent"], comment["created"],
                 comment["up"], comment["down"], comment["confidence"], comment["mark"]]
         self.sql_queue.put((statement, data, None))

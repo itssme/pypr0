@@ -42,12 +42,12 @@ class User(ApiItem):
             json_obj = json.loads(json_str)
             json_obj_user = json_obj["user"]
 
-            for key, item in json_obj_user.iteritems():
+            for key, item in json_obj_user.items():
                 self[key] = item
 
         elif json_obj is not None:
             json_obj_user = json_obj["user"]
-            for key, item in json_obj_user.iteritems():
+            for key, item in json_obj_user.items():
                 self[key] = item
 
         self["tagCount"] = json_obj["tagCount"]
