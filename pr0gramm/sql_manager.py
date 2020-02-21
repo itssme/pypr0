@@ -105,10 +105,10 @@ class Manager(threading.Thread):
                 raise LookupError
 
     def insert_post(self, post):
-        statement = "insert into posts values(" + "".join(["?," for key, value in post.iteritems()])[:-1] + ")"
+        statement = "insert into posts values(" + "".join(["?," for key, value in post.items()])[:-1] + ")"
         data = [post["id"], post["user"], post["promoted"], post["up"], post["down"], post["created"], post["image"],
                 post["thumb"], post["fullsize"], post["width"], post["height"], post["audio"], post["source"],
-                post["flags"], post["mark"], post["deleted"], post["userId"], post["gift"]]
+                post["flags"], post["user"], post["mark"], post["gift"]]
         self.sql_queue.put((statement, data, None))
 
     def insert_posts(self, posts):

@@ -227,7 +227,7 @@ class Api:
         self.__current = Post(self.get_newest_image())["id"]
         return self
 
-    def next(self):
+    def __next__(self):
         posts = Posts(self.get_items(self.__current))
         try:
             self.__current = posts.minId()
@@ -330,7 +330,7 @@ class Api:
 
                 return self
 
-            def next(self):
+            def __next__(self):
                 posts = Posts(self.api.get_items(self.__current, self.flag, self.promoted, self.older, self.user))
                 if self.older:
                     try:
@@ -424,7 +424,7 @@ class Api:
 
                 return self
 
-            def next(self):
+            def __next__(self):
                 posts = Posts(self.api.get_items_by_tag(self.tags, flag=self.flag, newer=self.__current,
                                                         promoted=self.promoted, user=self.user))
                 if older != -1:
@@ -557,7 +557,7 @@ class Api:
 
                 return self
 
-            def next(self):
+            def __next__(self):
                 comments = Comments(self.api.get_user_comments(self.user, self.__current, self.older, self.flag))
                 if self.older:
                     try:
