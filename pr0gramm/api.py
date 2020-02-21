@@ -3,8 +3,8 @@ import json
 import os
 import webbrowser
 from requests import get, post, utils
-from api_exceptions import NotLoggedInException, RateLimitReached
-from urllib import unquote
+from pr0gramm.api_exceptions import NotLoggedInException, RateLimitReached
+from urllib import parse
 
 
 # TODO: implement logging
@@ -153,7 +153,7 @@ class Posts(ApiList):
             self.json = json.loads(json_str)
             items = self.json["items"]
 
-            for i in xrange(0, len(items)):
+            for i in range(0, len(items)):
                 self.append(Post(json_obj=items[i]))
 
     def minPromotedId(self):
@@ -177,7 +177,7 @@ class Comments(ApiList):
             self.json = json.loads(json_str)
             items = self.json["comments"]
 
-            for i in xrange(0, len(items)):
+            for i in range(0, len(items)):
                 self.append(Comment(json_obj=items[i]))
 
 
@@ -194,7 +194,7 @@ class Tags(ApiList):
             self.json = json.loads(json_str)
             items = self.json["tags"]
 
-            for i in xrange(0, len(items)):
+            for i in range(0, len(items)):
                 self.append(Tag(json_obj=items[i]))
 
 
@@ -680,10 +680,10 @@ class Api:
                  returns true if the vote was successful else false
         """
         if self.logged_in:
-            nonce = json.loads(unquote(self.__login_cookie["me"]).decode('utf8'))["id"][0:16]
+            nonce = json.loads(parse.unquote(self.__login_cookie["me"]).decode('utf8'))["id"][0:16]
             r = post(self.api_url + "items/vote",
-                    data={"id": id, "vote": vote, '_nonce': nonce},
-                    cookies=self.__login_cookie)
+                     data={"id": id, "vote": vote, '_nonce': nonce},
+                     cookies=self.__login_cookie)
             return True
         else:
             return False
@@ -706,7 +706,7 @@ class Api:
                  returns true if the vote was successful else false
         """
         if self.logged_in:
-            nonce = json.loads(unquote(self.__login_cookie["me"]).decode('utf8'))["id"][0:16]
+            nonce = json.loads(parse.unquote(self.__login_cookie["me"]).decode('utf8'))["id"][0:16]
             r = post(self.api_url + "comments/vote",
                      data={"id": id, "vote": vote, '_nonce': nonce},
                      cookies=self.__login_cookie)
@@ -730,19 +730,19 @@ class Api:
 
             # TODO re-login after some time -> delete cookie
             if os.path.isfile(cookie_path):
-                print "already logged in via cookie -> reading file"
+                print("already logged in via cookie -> reading file")
                 try:
                     with open(cookie_path, "r") as tmp_file:
                         self.__login_cookie = json.loads(tmp_file.read())
                     self.logged_in = True
                     return True
                 except IOError:
-                    print "Could not open cookie file %s", cookie_path
+                    print("Could not open cookie file %s", cookie_path)
 
             r = ""
             logged_in = False
             while not logged_in:
-                print "Trying to login in via request."
+                print("Trying to login in via request.")
 
                 captcha_req = get(self.api_url + "user/captcha")
                 token = captcha_req.json()["token"]
@@ -753,19 +753,19 @@ class Api:
 
                 try:
                     webbrowser.open("captcha.png")
-                    print "Your webbrowser or image viewer should open and display the image"
-                    print "write the correct content of the captcha into the command line:"
+                    print("Your webbrowser or image viewer should open and display the image")
+                    print("write the correct content of the captcha into the command line:")
                 except:
-                    print "Could not open image through xdg-open"
-                    print "Open the image 'captcha.png' and write the correct content into the command line:"
+                    print("Could not open image through xdg-open")
+                    print("Open the image 'captcha.png' and write the correct content into the command line:")
 
-                captcha = raw_input("?: ")
+                captcha = input("?: ")
 
                 r = post(self.login_url, data={'name': self.__username, 'password': self.__password,
                                                'captcha': captcha, 'token': token})
 
                 if not r.json()["success"]:
-                    print "There was an error logging in: " + str(r.json()["error"])
+                    print("There was an error logging in: " + str(r.json()["error"]))
                 else:
                     logged_in = True
 
@@ -781,14 +781,14 @@ class Api:
                     with open(cookie_path, 'w') as temp_file:
                         temp_file.write(json.dumps(utils.dict_from_cookiejar(r.cookies)))
                 except IOError:
-                    print 'Could not write cookie file %s', cookie_path
+                    print('Could not write cookie file %s', cookie_path)
                     self.logged_in = False
                     return False
             else:
-                print 'Login not possible.'
+                print('Login not possible.')
                 self.logged_in = False
                 return False
 
-            print "Successfully logged in and written cookie file"
+            print("Successfully logged in and written cookie file")
             self.logged_in = True
             return True
