@@ -98,7 +98,6 @@ class Pr0grammApiTests(unittest.TestCase):
               "qc": 13
             }
             '''
-        user = user.encode('utf8')
         self.test_user = User(json_str=user)
 
         tag = '''
@@ -108,7 +107,6 @@ class Pr0grammApiTests(unittest.TestCase):
               "tag": "schmuserkadser"
             }
             '''
-        tag = tag.encode('utf8')
         self.test_tag = Tag(json_str=tag)
 
         comment = '''
@@ -123,7 +121,6 @@ class Pr0grammApiTests(unittest.TestCase):
               "name": "Doryani",
               "mark": 10
             }'''
-        comment = comment.encode('utf8')
         self.test_comment = Comment(comment)
 
         posts = '''
@@ -148,7 +145,6 @@ class Pr0grammApiTests(unittest.TestCase):
                   "flags": 1,
                   "user": "itssme",
                   "mark": 0,
-                  "deleted": 0,
                   "userId": 315478,
                   "gift": 0
                 },
@@ -179,7 +175,6 @@ class Pr0grammApiTests(unittest.TestCase):
               "qc": 4
             }
             '''
-        posts = posts.encode('utf8')
         self.test_posts = Posts(json_str=posts)
         self.test_post = self.test_posts[0]
 
@@ -452,7 +447,7 @@ class Pr0grammApiTests(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    # for testing with login call like: USERNAME="itssme" PASSWORD="1234" "LOGIN="true" python tests.py"
+    # for testing with login call like: USERNAME="itssme" PASSWORD="1234" LOGIN="true" python3 tests.py
     Pr0grammApiTests.login = os.environ.get('LOGIN', Pr0grammApiTests.login)
     Pr0grammApiTests.USERNAME = os.environ.get('USERNAME', Pr0grammApiTests.USERNAME)
     Pr0grammApiTests.PASSWORD = os.environ.get('PASSWORD', Pr0grammApiTests.PASSWORD)

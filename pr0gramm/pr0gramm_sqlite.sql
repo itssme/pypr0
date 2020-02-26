@@ -35,7 +35,6 @@ create table posts (
     source varchar(1024),
     flags int,
     mark int,
-    deleted int,
     userId int,
     gift int
 );
