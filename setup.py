@@ -11,7 +11,7 @@ else:
 
 setuptools.setup(
     name="pypr0",
-    version="0.1.6",
+    version="0.1.7",
     author="itssme",
     author_email="itssme3000@gmail.com",
     description="Implementation of the pr0gramm api in python",
@@ -21,7 +21,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     include_package_data=True,
     classifiers=[
-        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3.7",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Operating System :: OS Independent",
     ],

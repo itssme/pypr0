@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/python:2.7-stretch
+      - image: circleci/python:3.7-stretch
     working_directory: ~/repo
 
     steps:
@@ -11,12 +11,12 @@ jobs:
       - run:
           name: install dependencies
           command: |
-            sudo pip install requests
+            sudo pip3 install requests
 
       - run:
           name: run tests
           command: |
-            python tests.py
+            python3 tests.py
 
       - store_artifacts:
           path: test-reports
