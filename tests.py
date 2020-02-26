@@ -447,7 +447,7 @@ class Pr0grammApiTests(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    # for testing with login call like: USERNAME="itssme" PASSWORD="1234" "LOGIN="true" python tests.py"
+    # for testing with login call like: USERNAME="itssme" PASSWORD="1234" LOGIN="true" python3 tests.py
     Pr0grammApiTests.login = os.environ.get('LOGIN', Pr0grammApiTests.login)
     Pr0grammApiTests.USERNAME = os.environ.get('USERNAME', Pr0grammApiTests.USERNAME)
     Pr0grammApiTests.PASSWORD = os.environ.get('PASSWORD', Pr0grammApiTests.PASSWORD)

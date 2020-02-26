@@ -204,7 +204,7 @@ class TagAssignments(list):
 
 
 class Api:
-    def __init__(self, username="", password="", tmp_dir="./"):
+    def __init__(self, username: str="", password: str="", tmp_dir: str="./"):
         self.__password = password
         self.__username = username
         self.__login_cookie = None
@@ -236,7 +236,7 @@ class Api:
         return posts
 
     @staticmethod
-    def calculate_flag(sfw=True, nsfp=False, nsfw=False, nsfl=False):
+    def calculate_flag(sfw: bool=True, nsfp: bool=False, nsfw: bool=False, nsfl: bool=False) -> int:
         """
         Used to calculate flags for the post requests
 
@@ -268,7 +268,8 @@ class Api:
 
         return flag
 
-    def get_items(self, item, flag=1, promoted=0, older=True, user=None):
+    def get_items(self, item: int or str, flag: int or str=1, promoted: int=0,
+                  older: bool or None=True, user: str=None) -> str:
         """
         Gets items from the pr0gramm api
 
@@ -309,7 +310,8 @@ class Api:
 
         return r.content.decode('utf-8')
 
-    def get_items_iterator(self, item=-1, flag=1, promoted=0, older=True, user=None):
+    def get_items_iterator(self, item: int or str=-1, flag: int or str=1, promoted: int=0,
+                           older: bool or None=True, user: str=None):
         class __items_iterator:
             self.__current = -1
 
@@ -352,7 +354,8 @@ class Api:
 
         return __items_iterator(self, item, flag, promoted, older, user)
 
-    def get_items_by_tag(self, tags, flag=1, older=-1, newer=-1, promoted=0, user=None):
+    def get_items_by_tag(self, tags: str, flag: int or str=1, older: int=-1, newer: int=-1,
+                         promoted: int=0, user: str=None) -> str:
         """
         Gets items with a specific tag from the pr0gramm api
 
@@ -399,7 +402,8 @@ class Api:
 
         return r.content.decode('utf-8')
 
-    def get_items_by_tag_iterator(self, tags, flag=1, older=-1, newer=-1, promoted=0, user=None):
+    def get_items_by_tag_iterator(self, tags: str, flag: int or str=1, older: int=-1, newer: int=-1,
+                                  promoted: int=0, user: str=None):
         class __items_tag_iterator:
             self.__current = -1
 
@@ -447,7 +451,7 @@ class Api:
 
         return __items_tag_iterator(tags, self, flag, older, promoted, user)
 
-    def get_item_info(self, item, flag=1):
+    def get_item_info(self, item: int or str, flag: int or str=1) -> str:
         """
         Get item info from pr0gramm api
         For example:
@@ -471,7 +475,7 @@ class Api:
                 cookies=self.__login_cookie)
         return r.content.decode("utf-8")
 
-    def get_user_info(self, user, flag=1):
+    def get_user_info(self, user: str, flag: int or str=1) -> str:
         """
         Get user info from pr0gramm api
         For example:
@@ -483,6 +487,9 @@ class Api:
         ----------
         :param user: str
                      username for getting the user info
+        :param flag: int or str
+                     see api.md for details
+                     call calculate_flag if you are not sure what flag to use
         :return: str
                  json reply from api
         """
@@ -492,7 +499,7 @@ class Api:
                 cookies=self.__login_cookie)
         return r.content.decode("utf-8")
 
-    def get_user_comments(self, user, created=-1, older=True, flag=1):
+    def get_user_comments(self, user: str, created: int=-1, older: bool=True, flag: int=1) -> str:
         """
         login required
         Get comments
@@ -509,6 +516,9 @@ class Api:
                      None gets the newest comment
                      True gets all comments older than item
                      False gets all comments newer than item
+        :param flag: int or str
+                     see api.md for details
+                     call calculate_flag if you are not sure what flag to use
         :return: str
                  json reply from api
         """
@@ -534,7 +544,7 @@ class Api:
 
         return r.content.decode("utf-8")
 
-    def get_user_comments_iterator(self, user, created=-1, older=True, flag=1):
+    def get_user_comments_iterator(self, user: str, created: int=-1, older: bool=True, flag: int or str=1):
         class __user_comments_iterator:
             self.__current = -1
 
@@ -573,7 +583,7 @@ class Api:
 
         return __user_comments_iterator(self, user, created, older, flag)
 
-    def get_newest_image(self, flag=1, promoted=0, user=None):
+    def get_newest_image(self, flag: int or str=1, promoted: int=0, user: str=None) -> str:
         """
         Gets the newest post either on /new (promoted=0) or /top (promoted=1)
 
@@ -602,7 +612,7 @@ class Api:
         r = json.dumps(json.loads(r)["items"][0])
         return r
 
-    def get_inbox(self, older=0):
+    def get_inbox(self, older: int=0) -> str:
         """
         login required
         Gets messages from inbox
@@ -631,7 +641,7 @@ class Api:
             pass
         return r.content.decode("utf-8")
 
-    def get_messages_with_user(self, user, older=None):
+    def get_messages_with_user(self, user: str, older: str or str=None) -> str:
         """
         Gets messages from a specific user
 
@@ -639,9 +649,9 @@ class Api:
         ----------
         :param user: str
                      username from the other user
-        :param older: int, str
+        :param older: int or str
                       messages older than this id will be returned
-        :return: json
+        :return: str
                  Returns messages from a specified user
         """
         r = ""
@@ -662,15 +672,15 @@ class Api:
             pass
         return r.content.decode("utf-8")
 
-    def vote_post(self, id, vote):
+    def vote_post(self, id: int or str, vote: int or str) -> bool:
         """
         Vote for a post with a specific id
 
         Parameters
         ----------
-        :param id: int, str
+        :param id: int or str
                    post id that will be voted for
-        :param vote: int, str
+        :param vote: int or str
                      type of vote:
                         -1 = -
                         0 = unvote (nothing)
@@ -680,7 +690,7 @@ class Api:
                  returns true if the vote was successful else false
         """
         if self.logged_in:
-            nonce = json.loads(parse.unquote(self.__login_cookie["me"]).decode('utf8'))["id"][0:16]
+            nonce = json.loads(parse.unquote(self.__login_cookie["me"]))["id"][0:16]
             r = post(self.api_url + "items/vote",
                      data={"id": id, "vote": vote, '_nonce': nonce},
                      cookies=self.__login_cookie)
@@ -688,15 +698,15 @@ class Api:
         else:
             return False
 
-    def vote_comment(self, id, vote):
+    def vote_comment(self, id: int or str, vote: int or str) -> bool:
         """
         Vote for a comment with a specific id
 
         Parameters
         ----------
-        :param id: int, str
+        :param id: int or str
                    comment id that will be voted for
-        :param vote: int, str
+        :param vote: int or str
                      type of vote:
                         -1 = -
                         0 = unvote (nothing)
@@ -706,7 +716,7 @@ class Api:
                  returns true if the vote was successful else false
         """
         if self.logged_in:
-            nonce = json.loads(parse.unquote(self.__login_cookie["me"]).decode('utf8'))["id"][0:16]
+            nonce = json.loads(parse.unquote(self.__login_cookie["me"]))["id"][0:16]
             r = post(self.api_url + "comments/vote",
                      data={"id": id, "vote": vote, '_nonce': nonce},
                      cookies=self.__login_cookie)
@@ -714,7 +724,32 @@ class Api:
         else:
             return False
 
-    def login(self):
+    def vote_tag(self, id: int or str, vote: int or str) -> bool:
+        """
+        Vote for a tag with a specific id
+
+        Parameters
+        ----------
+        :param id: int or str
+                   tag id that will be voted for
+        :param vote: int or str
+                     type of vote:
+                        -1 = -
+                        0 = unvote (nothing)
+                        1 = +
+        :return: bool
+                 returns true if the vote was successful else false
+        """
+        if self.logged_in:
+            nonce = json.loads(parse.unquote(self.__login_cookie["me"]))["id"][0:16]
+            r = post(self.api_url + "tags/vote",
+                     data={"id": id, "vote": vote, '_nonce': nonce},
+                     cookies=self.__login_cookie)
+            return True
+        else:
+            return False
+
+    def login(self) -> bool:
         """
         Logs in with a specific account
 
@@ -748,7 +783,7 @@ class Api:
                 token = captcha_req.json()["token"]
                 image = captcha_req.json()["captcha"].split("base64,")[-1]
                 write_img = open("captcha.png", "wb")
-                write_img.write(base64.decodestring(image))
+                write_img.write(base64.b64decode(image))
                 write_img.close()
 
                 try:
