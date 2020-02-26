@@ -108,7 +108,7 @@ class Manager(threading.Thread):
         statement = "insert into posts values(" + "".join(["?," for key, value in post.items()])[:-1] + ")"
         data = [post["id"], post["user"], post["promoted"], post["up"], post["down"], post["created"], post["image"],
                 post["thumb"], post["fullsize"], post["width"], post["height"], post["audio"], post["source"],
-                post["flags"], post["user"], post["mark"], post["gift"]]
+                post["flags"], post["userId"], post["mark"], post["gift"]]
         self.sql_queue.put((statement, data, None))
 
     def insert_posts(self, posts):
@@ -153,10 +153,6 @@ class Manager(threading.Thread):
         statement = "insert into tag_assignments values(?, ?, ?, ?)"
         data = [tag_assignment.post, tag_assignment.id, tag_assignment.tag, tag_assignment.confidence]
         self.sql_queue.put((statement, data, None))
-
-    def insert_tag_assignments(self, tag_assignments):
-        for tag_assignment in tag_assignments:
-            self.insert_tag_assignment(tag_assignment)
 
     def insert_tag_assignments(self, tag_assignments):
         for tag_assignment in tag_assignments:
