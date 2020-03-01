@@ -2,7 +2,7 @@ import setuptools
 import os
 
 base_dir = os.path.dirname(__file__)
-readme_path = os.path.join(base_dir, "readme.md")
+readme_path = os.path.join(base_dir, "README")
 if os.path.exists(readme_path):
     with open(readme_path) as stream:
         long_description = stream.read()
@@ -25,4 +25,8 @@ setuptools.setup(
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Operating System :: OS Independent",
     ],
+    license="GNU GPLv3",
+    install_requires=[
+          'requests',
+    ]
 )
