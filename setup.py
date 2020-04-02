@@ -2,7 +2,7 @@ import setuptools
 import os
 
 base_dir = os.path.dirname(__file__)
-readme_path = os.path.join(base_dir, "README")
+readme_path = os.path.join(base_dir, "readme.md")
 if os.path.exists(readme_path):
     with open(readme_path) as stream:
         long_description = stream.read()
@@ -11,7 +11,7 @@ else:
 
 setuptools.setup(
     name="pypr0",
-    version="0.1.7",
+    version="0.1.85",
     author="itssme",
     author_email="itssme3000@gmail.com",
     description="Implementation of the pr0gramm api in python",
