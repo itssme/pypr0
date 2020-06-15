@@ -11,7 +11,7 @@ else:
 
 setuptools.setup(
     name="pypr0",
-    version="0.1.85",
+    version="0.2",
     author="itssme",
     author_email="itssme3000@gmail.com",
     description="Implementation of the pr0gramm api in python",

@@ -475,6 +475,86 @@ class Api:
                 cookies=self.__login_cookie)
         return r.content.decode("utf-8")
 
+    def get_collection_items(self, collection: str="favoriten", user: str="", item: int or str=None, flag: int or str=9,
+                             older: bool or None=True) -> str:
+        """
+        Get a collection from pr0gramm api
+        For example:
+            'https://pr0gramm.com/api/items/get?flags=9&user=itssme&collection=favoriten&self=true'
+
+        Parameters
+        ----------
+        :param collection: Name of the collection
+        :param user: Name of the user the collection belongs to
+        :param item: Requested post id, sets the start for the fetched posts
+        :param older: bool or None
+                      True for 'older' posts than the item requested
+                      False for 'newer' posts
+                      None for 'get'
+        :param flag: int or str
+                     see api.md for details
+                     call calculate_flag if you are not sure what flag to use
+        :return: str
+                 json reply from api
+        """
+
+        if user == "":
+            user = self.__username
+
+        get_type = 'get'
+        if older:
+            get_type = 'older'
+        elif older is not None:
+            get_type = 'newer'
+
+        if item is None:
+            r = get(self.items_url,
+                    params={'flags': flag, 'user': user, "collection": collection},
+                    cookies=self.__login_cookie)
+        else:
+            r = get(self.items_url,
+                    params={get_type: item, 'flags': flag, 'user': user, "collection": collection},
+                    cookies=self.__login_cookie)
+
+        return r.content.decode("utf-8")
+
+    def get_collection_items_iterator(self, collection: str="favoriten", user: str="", item: int or str=None,
+                                      flag: int or str=9, older: bool or None=True):
+        class __collection_items_iterator:
+            self.__current = -1
+
+            def __init__(self, api, item, collection: str="favoriten", flag=1, older=True, user=None):
+                self.item = item
+                self.api = api
+                self.collection = collection
+                self.flag = flag
+                self.older = older
+                self.user = user
+
+            def __iter__(self):
+                if self.item is None:
+                    self.__current = Posts(self.api.get_collection_items(collection, user, item, flag, older)).maxId()
+                else:
+                    self.__current = self.item
+
+                return self
+
+            def __next__(self):
+                posts = Posts(self.api.get_collection_items(collection, user, self.__current, flag, older))
+                if self.older:
+                    try:
+                        self.__current = posts.minId()
+                    except IndexError:
+                        raise StopIteration
+                else:
+                    try:
+                        self.__current = posts.maxId()
+                    except IndexError:
+                        raise StopIteration
+                return posts
+
+        return __collection_items_iterator(self, item, collection, flag, older, user)
+
     def get_user_info(self, user: str, flag: int or str=1) -> str:
         """
         Get user info from pr0gramm api
