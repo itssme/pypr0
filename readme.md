@@ -34,3 +34,23 @@ For examples see this repository: https://github.com/itssme/pypr0-examples
 
 ### CircleCI build
 [![CircleCI](https://circleci.com/gh/itssme/pypr0.svg?style=svg&circle-token=87c5fd78b5010d4e2c26dc9c2a385ed40be57818)](https://circleci.com/gh/itssme/python_pr0gramm_api)
+
+# Release Notes
+
+## 0.2.5 (in development)
+
++ a lot of refactoring and cleaning up in all api functions
++ passing 'newer' to ```get_items_by_tag``` is now deprecated, instead pass 'older' as a boolean and pass an 'item' as id (just like for any other api function)
++ more extensive tests
+
+## 0.2
+
+**current version**
+
++ added ```get_collection_items``` and ```get_collection_items_iterator``` which gets the content of collection (replacing favorites)
+
+## 0.1.7
+
++ updated to python3
+
+thanks to [@FritzJo](https://github.com/FritzJo)

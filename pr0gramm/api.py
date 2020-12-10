@@ -1,7 +1,11 @@
 import base64
 import json
 import os
+import time
+import warnings
 import webbrowser
+
+import requests
 from requests import get, post, utils
 from pr0gramm.api_exceptions import NotLoggedInException, RateLimitReached
 from urllib import parse
@@ -204,7 +208,7 @@ class TagAssignments(list):
 
 
 class Api:
-    def __init__(self, username: str="", password: str="", tmp_dir: str="./"):
+    def __init__(self, username: str = "", password: str = "", tmp_dir: str = "./"):
         self.__password = password
         self.__username = username
         self.__login_cookie = None
@@ -212,13 +216,15 @@ class Api:
 
         self.tmp_dir = tmp_dir
 
-        self.image_url = 'https://img.pr0gramm.com/'
-        self.api_url = 'https://pr0gramm.com/api/'
-        self.login_url = 'https://pr0gramm.com/api/user/login/'
+        self.image_url = "https://img.pr0gramm.com/"
+        self.api_url = "https://pr0gramm.com/api/"
+        self.login_url = "https://pr0gramm.com/api/user/login/"
         self.profile_comments = self.api_url + "profile/comments"
         self.profile_user = self.api_url + "profile/info"
-        self.items_url = self.api_url + 'items/get'
-        self.item_url = self.api_url + 'items/info'
+        self.items_url = self.api_url + "items/get"
+        self.item_info_url = self.api_url + "items/info"
+        self.inbox_all_url = self.api_url + "inbox/all"
+        self.inbox_messages_url = self.api_url + "inbox/messages"
 
         self.logged_in = False
         self.login()
@@ -236,7 +242,7 @@ class Api:
         return posts
 
     @staticmethod
-    def calculate_flag(sfw: bool=True, nsfp: bool=False, nsfw: bool=False, nsfl: bool=False) -> int:
+    def calculate_flag(sfw: bool = True, nsfp: bool = False, nsfw: bool = False, nsfl: bool = False) -> int:
         """
         Used to calculate flags for the post requests
 
@@ -268,8 +274,46 @@ class Api:
 
         return flag
 
-    def get_items(self, item: int or str, flag: int or str=1, promoted: int=0,
-                  older: bool or None=True, user: str=None) -> str:
+    @staticmethod
+    def __raise_possible_exceptions(r: requests.models.Response):
+        """
+        Raises exceptions depending on http status code from request
+
+        :param r: response returned by a request
+        :return: None
+        :raises NotLoggedInException if status code is 403 (forbidden)
+        """
+        if r.status_code == 403:
+            raise NotLoggedInException()
+
+    @staticmethod
+    def __set_older_param(params, older, item):
+        if older:
+            params["older"] = item
+        elif older is not None:
+            params["newer"] = item
+
+        return params
+
+    def __items_request(self, params) -> str:
+        """
+        Makes a request to self.items_url
+
+        :param params: dict
+                       with url parameters
+        :return: str
+                 json reply from api
+        """
+        r = get(self.items_url,
+                params=params,
+                cookies=self.__login_cookie)
+
+        self.__raise_possible_exceptions(r)
+
+        return r.content.decode('utf-8')
+
+    def get_items(self, item: int or str, flag: int or str = 1, promoted: int = 0,
+                  older: bool or None = True, user: str = None) -> str:
         """
         Gets items from the pr0gramm api
 
@@ -279,7 +323,7 @@ class Api:
                      requested post for example: 2525097
         :param flag: int or str
                      see api.md for details
-                     call calculate_flag if you are not sure what flag to use
+                     call calculate_flag if you are not sure which flag to use
         :param promoted: int 0 or 1
                          0 for all posts
                          1 for posts that have been in top
@@ -293,25 +337,17 @@ class Api:
                  json reply from api
         """
 
-        get_type = 'get'
-        if older:
-            get_type = 'older'
-        elif older is not None:
-            get_type = 'newer'
+        params = {"flags": flag, "promoted": promoted}
+
+        params = self.__set_older_param(params, older, item)
 
         if user is not None:
-            r = get(self.items_url,
-                    params={get_type: item, 'flags': flag, 'promoted': promoted},
-                    cookies=self.__login_cookie)
-        else:
-            r = get(self.items_url,
-                    params={get_type: item, 'flags': flag, 'promoted': promoted, 'user': user},
-                    cookies=self.__login_cookie)
+            params["user"] = user
 
-        return r.content.decode('utf-8')
+        return self.__items_request(params)
 
-    def get_items_iterator(self, item: int or str=-1, flag: int or str=1, promoted: int=0,
-                           older: bool or None=True, user: str=None):
+    def get_items_iterator(self, item: int or str = -1, flag: int or str = 1, promoted: int = 0,
+                           older: bool or None = True, user: str = None):
         class __items_iterator:
             self.__current = -1
 
@@ -354,8 +390,14 @@ class Api:
 
         return __items_iterator(self, item, flag, promoted, older, user)
 
-    def get_items_by_tag(self, tags: str, flag: int or str=1, older: int=-1, newer: int=-1,
-                         promoted: int=0, user: str=None) -> str:
+    # this function will be removed in a future release and __get_items_by_tag will become this function
+    def get_items_by_tag(self, *args, **kwargs):
+        if "newer" in kwargs or ("older" in kwargs and type(kwargs["older"]) != bool):
+            return self.__drep_get_items_by_tag(*args, **kwargs)
+        return self.__get_items_by_tag(*args, **kwargs)
+
+    def __drep_get_items_by_tag(self, tags: str, flag: int or str = 1, older: int = -1, newer: int = -1,
+                                promoted: int = 0, user: str = None) -> str:
         """
         Gets items with a specific tag from the pr0gramm api
 
@@ -368,7 +410,7 @@ class Api:
                                'schmuserkadser' and 'blus'
         :param flag: int or str
                      see api.md for details
-                     call calculate_flag if you are not sure what flag to use
+                     call calculate_flag if you are not sure which flag to use
         :param older: int
                       Specifies the first post that will be returned from the api
                       For example: older=2525097 tags='schmuserkadser' will get
@@ -386,24 +428,67 @@ class Api:
                  json reply from api
         """
 
+        warnings.warn(
+            "passing 'newer' to get_items_by_tag is deprecated, instead pass 'older' as a boolean and pass an 'item' "
+            "as id",
+            DeprecationWarning
+        )
+
         tags = tags.replace(" ", "+")
+        params = {'flags': flag, 'promoted': promoted, 'tags': tags}
+
         if older != -1:
-            params = {'older': older, 'flags': flag, 'promoted': promoted, 'tags': tags}
+            params['older'] = older
         elif newer != -1:
-            params = {'newer': newer, 'flags': flag, 'promoted': promoted, 'tags': tags}
-        else:
-            params = {'flags': flag, 'promoted': promoted, 'tags': tags}
+            params['newer'] = newer
+
         if user is not None:
             params["user"] = user
 
-        r = get(self.items_url,
-                params=params,
-                cookies=self.__login_cookie)
+        return self.__items_request(params)
 
-        return r.content.decode('utf-8')
+    def __get_items_by_tag(self, tags: str, flag: int = 1, item: int = None, older: bool or None = True,
+                           promoted: int = 0, user: str = None) -> str:
+        """
+        Gets items with a specific tag from the pr0gramm api
 
-    def get_items_by_tag_iterator(self, tags: str, flag: int or str=1, older: int=-1, newer: int=-1,
-                                  promoted: int=0, user: str=None):
+        Parameters
+        ----------
+        :param tags: str
+                     Search posts by tags
+                     Example: 'schmuserkadser blus'
+                               Will return all posts with the tags
+                               'schmuserkadser' and 'blus'
+        :param flag: int
+                     see api.md for details
+                     call calculate_flag if you are not sure which flag to use
+        :param item: int or str
+                     requested post for example: 2525097
+        :param older: bool or None
+                      True for 'older' posts than the item requested
+                      False for 'newer' posts
+                      None for 'get'
+        :param promoted: int 0 or 1
+                         0 for all posts
+                         1 for posts that have been in top
+        :param user: str
+                     get uploads from one specific user
+        :return: str
+                 json reply from api
+        """
+
+        tags = tags.replace(" ", "+")
+        params = {"flags": flag, "promoted": promoted, "tags": tags}
+
+        params = self.__set_older_param(params, older, item)
+
+        if user is not None:
+            params["user"] = user
+
+        return self.__items_request(params)
+
+    def get_items_by_tag_iterator(self, tags: str, flag: int or str = 1, older: int = -1, newer: int = -1,
+                                  promoted: int = 0, user: str = None):
         class __items_tag_iterator:
             self.__current = -1
 
@@ -451,7 +536,7 @@ class Api:
 
         return __items_tag_iterator(tags, self, flag, older, promoted, user)
 
-    def get_item_info(self, item: int or str, flag: int or str=1) -> str:
+    def get_item_info(self, item: int or str, flag: int or str = 1) -> str:
         """
         Get item info from pr0gramm api
         For example:
@@ -465,18 +550,24 @@ class Api:
                      requested post for example: 2525097
         :param flag: int or str
                      see api.md for details
-                     call calculate_flag if you are not sure what flag to use
+                     call calculate_flag if you are not sure which flag to use
         :return: str
                  json reply from api
         """
 
-        r = get(self.item_url + "?itemId=" + str(item),
-                params={'flags': flag},
-                cookies=self.__login_cookie)
-        return r.content.decode("utf-8")
+        params = {"itemId": item, "flags": flag}
 
-    def get_collection_items(self, collection: str="favoriten", user: str="", item: int or str=None, flag: int or str=9,
-                             older: bool or None=True) -> str:
+        r = get(self.item_info_url,
+                params=params,
+                cookies=self.__login_cookie)
+
+        self.__raise_possible_exceptions(r)
+
+        return r.content.decode('utf-8')
+
+    def get_collection_items(self, collection: str = "favoriten", user: str = None, item: int = None,
+                             flag: int or str = 9,
+                             older: bool or None = True) -> str:
         """
         Get a collection from pr0gramm api
         For example:
@@ -493,37 +584,26 @@ class Api:
                       None for 'get'
         :param flag: int or str
                      see api.md for details
-                     call calculate_flag if you are not sure what flag to use
+                     call calculate_flag if you are not sure which flag to use
         :return: str
                  json reply from api
         """
 
-        if user == "":
+        if user is None:
             user = self.__username
 
-        get_type = 'get'
-        if older:
-            get_type = 'older'
-        elif older is not None:
-            get_type = 'newer'
+        params = {"flags": flag, "user": user, "collection": collection}
 
-        if item is None:
-            r = get(self.items_url,
-                    params={'flags': flag, 'user': user, "collection": collection},
-                    cookies=self.__login_cookie)
-        else:
-            r = get(self.items_url,
-                    params={get_type: item, 'flags': flag, 'user': user, "collection": collection},
-                    cookies=self.__login_cookie)
+        self.__set_older_param(params, older, item)
 
-        return r.content.decode("utf-8")
+        return self.__items_request(params)
 
-    def get_collection_items_iterator(self, collection: str="favoriten", user: str="", item: int or str=None,
-                                      flag: int or str=9, older: bool or None=True):
+    def get_collection_items_iterator(self, collection: str = "favoriten", user: str = "", item: int or str = None,
+                                      flag: int or str = 9, older: bool or None = True):
         class __collection_items_iterator:
             self.__current = -1
 
-            def __init__(self, api, item, collection: str="favoriten", flag=1, older=True, user=None):
+            def __init__(self, api, item, collection: str = "favoriten", flag=1, older=True, user=None):
                 self.item = item
                 self.api = api
                 self.collection = collection
@@ -555,7 +635,7 @@ class Api:
 
         return __collection_items_iterator(self, item, collection, flag, older, user)
 
-    def get_user_info(self, user: str, flag: int or str=1) -> str:
+    def get_user_info(self, user: str, flag: int or str = 1) -> str:
         """
         Get user info from pr0gramm api
         For example:
@@ -569,7 +649,7 @@ class Api:
                      username for getting the user info
         :param flag: int or str
                      see api.md for details
-                     call calculate_flag if you are not sure what flag to use
+                     call calculate_flag if you are not sure which flag to use
         :return: str
                  json reply from api
         """
@@ -577,9 +657,12 @@ class Api:
         r = get(self.profile_user + "?user=" + user,
                 params={'flags': flag},
                 cookies=self.__login_cookie)
+
+        self.__raise_possible_exceptions(r)
+
         return r.content.decode("utf-8")
 
-    def get_user_comments(self, user: str, created: int=-1, older: bool=True, flag: int=1) -> str:
+    def get_user_comments(self, user: str, created: int = -1, older: bool = True, flag: int = 1) -> str:
         """
         login required
         Get comments
@@ -598,38 +681,34 @@ class Api:
                      False gets all comments newer than item
         :param flag: int or str
                      see api.md for details
-                     call calculate_flag if you are not sure what flag to use
+                     call calculate_flag if you are not sure which flag to use
         :return: str
                  json reply from api
         """
 
-        if older is None:
-            r = get(self.profile_user + "?name=" + user,
-                    params={'flags': flag},
-                    cookies=self.__login_cookie)
-        elif older:
-            r = get(self.profile_comments + "?name=" + user,
-                    params={'flags': flag, 'before': created},
-                    cookies=self.__login_cookie)
-        else:
-            r = get(self.profile_comments + "?name=" + user,
-                    params={'flags': flag, 'after': created},
-                    cookies=self.__login_cookie)
+        params = {"name": user, "flags": flag}
 
-        try:
-            if r.content["code"] == 403:
-                raise NotLoggedInException()
-        except KeyError:
-            pass
+        if older:
+            params["before"] = created
+        elif not older:
+            params["after"] = created
+
+        r = get(self.profile_comments,
+                params=params,
+                cookies=self.__login_cookie)
+
+        self.__raise_possible_exceptions(r)
 
         return r.content.decode("utf-8")
 
-    def get_user_comments_iterator(self, user: str, created: int=-1, older: bool=True, flag: int or str=1):
+    def get_user_comments_iterator(self, user: str, created: int = -1, older: bool = True, flag: int or str = 1):
         class __user_comments_iterator:
             self.__current = -1
 
             def __init__(self, api, user, created=-1, older=True, flag=1):
                 self.created = created
+                if self.created == -1 and older:
+                    self.created = time.time()
                 self.api = api
                 self.older = older
                 self.user = user
@@ -663,7 +742,7 @@ class Api:
 
         return __user_comments_iterator(self, user, created, older, flag)
 
-    def get_newest_image(self, flag: int or str=1, promoted: int=0, user: str=None) -> str:
+    def get_newest_image(self, flag: int = 1, promoted: int = 0, user: str = None) -> str:
         """
         Gets the newest post either on /new (promoted=0) or /top (promoted=1)
 
@@ -671,7 +750,7 @@ class Api:
         ----------
         :param flag: int or str
                      see api.md for details
-                     call calculate_flag if you are not sure what flag to use
+                     call calculate_flag if you are not sure which flag to use
         :param promoted: int (0 or 1)
                          0 for all posts
                          1 for posts that have been in top
@@ -680,19 +759,17 @@ class Api:
         :return: str
                  json reply from api
         """
-        if user is None:
-            r = get(self.items_url,
-                    params={'flags': flag, 'promoted': promoted},
-                    cookies=self.__login_cookie)
-        else:
-            r = get(self.items_url,
-                    params={'flags': flag, 'promoted': promoted, 'user': user},
-                    cookies=self.__login_cookie)
-        r = r.content.decode("utf8")
+
+        params = {"flags": flag, "promoted": promoted}
+
+        if user is not None:
+            params["user"] = user
+
+        r = self.__items_request(params)
         r = json.dumps(json.loads(r)["items"][0])
         return r
 
-    def get_inbox(self, older: int=0) -> str:
+    def get_inbox(self, older: int = -1) -> str:
         """
         login required
         Gets messages from inbox
@@ -704,24 +781,21 @@ class Api:
         :return: json
                  Returns messages
         """
-        r = ""
-        if older <= 0:
-            r = get("https://pr0gramm.com/api/inbox/all",
-                    params={},
-                    cookies=self.__login_cookie)
-        else:
-            r = get("https://pr0gramm.com/api/inbox/all",
-                    params={'older': older},
-                    cookies=self.__login_cookie)
-        content = json.loads(r.content.decode("utf-8"))
-        try:
-            if content["code"] == 403:
-                raise NotLoggedInException()
-        except KeyError:
-            pass
+
+        params = {}
+
+        if older != -1:
+            params["older"] = older
+
+        r = get(self.inbox_all_url,
+                params=params,
+                cookies=self.__login_cookie)
+
+        self.__raise_possible_exceptions(r)
+
         return r.content.decode("utf-8")
 
-    def get_messages_with_user(self, user: str, older: str or str=None) -> str:
+    def get_messages_with_user(self, user: str, older: int = None) -> str:
         """
         Gets messages from a specific user
 
@@ -729,30 +803,26 @@ class Api:
         ----------
         :param user: str
                      username from the other user
-        :param older: int or str
+        :param older: int
                       messages older than this id will be returned
         :return: str
                  Returns messages from a specified user
         """
-        r = ""
-        if older is None:
-            r = get("https://pr0gramm.com/api/inbox/messages",
-                    params={"with": user},
-                    cookies=self.__login_cookie)
-        else:
-            r = get("https://pr0gramm.com/api/inbox/messages",
-                    params={"with": user, "older": id},
-                    cookies=self.__login_cookie)
 
-        content = json.loads(r.content.decode("utf-8"))
-        try:
-            if content["code"] == 403:
-                raise NotLoggedInException()
-        except KeyError:
-            pass
+        params = {"with": user}
+
+        if older is not None:
+            params["older"] = older
+
+        r = get(self.inbox_messages_url,
+                params=params,
+                cookies=self.__login_cookie)
+
+        self.__raise_possible_exceptions(r)
+
         return r.content.decode("utf-8")
 
-    def vote_post(self, id: int or str, vote: int or str) -> bool:
+    def vote_post(self, id: int, vote: int) -> bool:
         """
         Vote for a post with a specific id
 
@@ -760,7 +830,7 @@ class Api:
         ----------
         :param id: int or str
                    post id that will be voted for
-        :param vote: int or str
+        :param vote: int
                      type of vote:
                         -1 = -
                         0 = unvote (nothing)
@@ -768,15 +838,16 @@ class Api:
                         2 = add to favorite
         :return: bool
                  returns true if the vote was successful else false
+        :raises: NotLoggedInException if user is not logged in
         """
         if self.logged_in:
             nonce = json.loads(parse.unquote(self.__login_cookie["me"]))["id"][0:16]
             r = post(self.api_url + "items/vote",
                      data={"id": id, "vote": vote, '_nonce': nonce},
                      cookies=self.__login_cookie)
-            return True
+            return r.status_code == 200
         else:
-            return False
+            raise NotLoggedInException()
 
     def vote_comment(self, id: int or str, vote: int or str) -> bool:
         """
@@ -794,17 +865,18 @@ class Api:
                         2 = add to favorite
         :return: bool
                  returns true if the vote was successful else false
+        :raises: NotLoggedInException if user is not logged in
         """
         if self.logged_in:
             nonce = json.loads(parse.unquote(self.__login_cookie["me"]))["id"][0:16]
             r = post(self.api_url + "comments/vote",
                      data={"id": id, "vote": vote, '_nonce': nonce},
                      cookies=self.__login_cookie)
-            return True
+            return r.status_code == 200
         else:
-            return False
+            raise NotLoggedInException()
 
-    def vote_tag(self, id: int or str, vote: int or str) -> bool:
+    def vote_tag(self, id: int, vote: int) -> bool:
         """
         Vote for a tag with a specific id
 
@@ -819,15 +891,16 @@ class Api:
                         1 = +
         :return: bool
                  returns true if the vote was successful else false
+        :raises: NotLoggedInException if user is not logged in
         """
         if self.logged_in:
             nonce = json.loads(parse.unquote(self.__login_cookie["me"]))["id"][0:16]
             r = post(self.api_url + "tags/vote",
                      data={"id": id, "vote": vote, '_nonce': nonce},
                      cookies=self.__login_cookie)
-            return True
+            return r.status_code == 200
         else:
-            return False
+            raise NotLoggedInException()
 
     def login(self) -> bool:
         """

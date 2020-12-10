@@ -290,9 +290,47 @@ class Pr0grammApiTests(unittest.TestCase):
 
     # OTHER TESTS
 
+    @staticmethod
+    def assert_post(l_post):
+        assert type(l_post["id"]) is int
+        assert type(l_post["promoted"]) is int
+        assert type(l_post["userId"]) is int
+        assert l_post["userId"] >= 0
+        assert type(l_post["up"]) is int
+        assert type(l_post["down"]) is int
+        assert type(l_post["image"]) is str
+        assert type(l_post["thumb"]) is str
+        assert type(l_post["fullsize"]) is str
+        assert type(l_post["width"]) is int
+        assert type(l_post["height"]) is int
+        assert type(l_post["audio"]) is bool
+        assert type(l_post["source"]) is str
+        assert type(l_post["flags"]) is int
+        assert 0 <= l_post["flags"] <= 15
+        assert type(l_post["user"]) is str
+        assert type(l_post["mark"]) is int
+        assert type(l_post["gift"]) is int
+
+    @staticmethod
+    def assert_comment(comment):
+        assert type(comment["id"]) is int
+        assert type(comment["up"]) is int
+        assert type(comment["down"]) is int
+        assert type(comment["content"]) is str
+        assert type(comment["created"]) is int
+        assert type(comment["itemId"]) is int
+        assert type(comment["thumb"]) is str
+
     def test_search_by_tag(self):
         response = self.api.get_items_by_tag("schmuserkadser")
         posts = Posts(response)
+
+        response_parsed = json.loads(response)
+        assert not response_parsed["atEnd"]
+        assert response_parsed["atStart"]
+        assert response_parsed["error"] is None
+        assert len(response_parsed["items"]) > 0
+
         for i in range(0, 10):
             sleep(0.2)  # avoid 503 errors
             post_info = self.api.get_item_info(posts[i]["id"])
@@ -303,7 +341,15 @@ class Pr0grammApiTests(unittest.TestCase):
                 tag = Tag(json_obj=post_info["tags"][j])
                 if "schmuserkadser" in tag["tag"].lower():
                     includes_tag = True
+
+                # check tag
+                assert type(tag["id"]) is int
+                assert type(tag["confidence"]) is float
+                assert type(tag["tag"]) is str
+                assert len(tag["tag"]) >= 2
+
             assert includes_tag
+            assert type(posts[i]["id"]) is int
 
     def test_crawl(self):
         id = Post(self.api.get_newest_image())["id"]
@@ -313,6 +359,10 @@ class Pr0grammApiTests(unittest.TestCase):
             sleep(0.2)  # avoid 503 errors
             posts.extend(Posts(self.api.get_items(id)))
             id = posts.minId()
+
+        for l_post in posts:
+            self.assert_post(l_post)
+            assert l_post["created"] > 1600000000
 
         assert len(posts) > 0
 
@@ -375,9 +425,11 @@ class Pr0grammApiTests(unittest.TestCase):
 
         upvotes = 0
         downvotes = 0
-        for post in all_posts:
-            upvotes += post["up"]
-            downvotes -= post["down"]
+        for l_post in all_posts:
+            upvotes += l_post["up"]
+            downvotes -= l_post["down"]
+
+            self.assert_post(l_post)
 
         # it is impossible that the sfc gets minus!
         assert upvotes > downvotes
@@ -395,9 +447,11 @@ class Pr0grammApiTests(unittest.TestCase):
 
         upvotes = 0
         downvotes = 0
-        for post in all_posts:
-            upvotes += post["up"]
-            downvotes -= post["down"]
+        for l_post in all_posts:
+            upvotes += l_post["up"]
+            downvotes -= l_post["down"]
+
+            self.assert_post(l_post)
 
         assert upvotes > 0
         assert (upvotes-downvotes) > 0
@@ -414,10 +468,10 @@ class Pr0grammApiTests(unittest.TestCase):
                 all_comments.extend(comments)
 
             for comment in all_comments:
-                assert comment["itemId"]
-                assert comment["id"]
+                self.assert_comment(comment)
 
-            assert len(all_comments) > 0
+            assert len(all_comments) > 100
+            assert counter == 5
 
     def test_get_message(self):  # this test will only work with my login (circle-ci tests with my login)
         if self.login:
@@ -428,12 +482,14 @@ class Pr0grammApiTests(unittest.TestCase):
             for msg in messages["messages"]:
                 if msg["created"] == message1:
                     assert msg["sent"] == 1
-                    assert msg["senderName"] == "itssme"
+                    assert msg["name"] == "itssme"
                     assert msg["id"] == 2091064
                 elif msg["created"] == message2:
                     assert msg["sent"] == 0
-                    assert msg["senderName"] == "froschler"
+                    assert msg["name"] == "froschler"
                     assert msg["id"] == 2091036
+                else:
+                    assert False
 
     def test_post_insert(self):
         post = Post(self.api.get_newest_image())
