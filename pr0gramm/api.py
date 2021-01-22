@@ -434,7 +434,7 @@ class Api:
             DeprecationWarning
         )
 
-        tags = tags.replace(" ", "+")
+        #tags = tags.replace(" ", "+")
         params = {'flags': flag, 'promoted': promoted, 'tags': tags}
 
         if older != -1:
@@ -477,7 +477,7 @@ class Api:
                  json reply from api
         """
 
-        tags = tags.replace(" ", "+")
+        #tags = tags.replace(" ", "+")
         params = {"flags": flag, "promoted": promoted, "tags": tags}
 
         params = self.__set_older_param(params, older, item)
