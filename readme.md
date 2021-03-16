@@ -37,17 +37,18 @@ For examples see this repository: https://github.com/itssme/pypr0-examples
 
 # Release Notes
 
-## 0.2.5 (in development)
+## 0.2.5
+
+**current version**
 
 + a lot of refactoring and cleaning up in all api functions
 + passing 'newer' to ```get_items_by_tag``` is now deprecated, instead pass 'older' as a boolean and pass an 'item' as id (just like for any other api function)
 + more extensive tests
++ passing multiple tags to items get now works again (ref: https://github.com/itssme/pypr0/pull/6); thanks to [@5n0wstorm](https://github.com/5n0wstorm)
 
 ## 0.2
 
-**current version**
-
-+ added ```get_collection_items``` and ```get_collection_items_iterator``` which gets the content of collection (replacing favorites)
++ added ```get_collection_items``` and ```get_collection_items_iterator``` which gets the content of a collection (replacing favorites)
 
 ## 0.1.7
 
