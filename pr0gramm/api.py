@@ -914,7 +914,7 @@ class Api:
         """
 
         if self.__password != "" and self.__username != "":
-            cookie_path = os.path.join(self.tmp_dir, "cookie.json")
+            cookie_path = os.path.join(self.tmp_dir, "%s_cookie.json" % self.__username)
 
             # TODO re-login after some time -> delete cookie
             if os.path.isfile(cookie_path):
