@@ -1,9 +1,12 @@
 import base64
+import io
 import json
 import os
+import tempfile
 import time
 import warnings
 import webbrowser
+from typing import List, Union
 
 import requests
 from requests import get, post, utils
@@ -208,7 +211,7 @@ class TagAssignments(list):
 
 
 class Api:
-    def __init__(self, username: str = "", password: str = "", tmp_dir: str = "./"):
+    def __init__(self, username: str = "", password: str = "", tmp_dir: str = "./", no_login: bool = False):
         self.__password = password
         self.__username = username
         self.__login_cookie = None
@@ -227,7 +230,9 @@ class Api:
         self.inbox_messages_url = self.api_url + "inbox/messages"
 
         self.logged_in = False
-        self.login()
+        if not no_login:
+            self.login()
+        return
 
     def __iter__(self):
         self.__current = Post(self.get_newest_image())["id"]
@@ -434,7 +439,7 @@ class Api:
             DeprecationWarning
         )
 
-        #tags = tags.replace(" ", "+")
+        # tags = tags.replace(" ", "+")
         params = {'flags': flag, 'promoted': promoted, 'tags': tags}
 
         if older != -1:
@@ -477,7 +482,7 @@ class Api:
                  json reply from api
         """
 
-        #tags = tags.replace(" ", "+")
+        # tags = tags.replace(" ", "+")
         params = {"flags": flag, "promoted": promoted, "tags": tags}
 
         params = self.__set_older_param(params, older, item)
@@ -902,81 +907,127 @@ class Api:
         else:
             raise NotLoggedInException()
 
-    def login(self) -> bool:
+    def get_captcha(self, tmp_path: str or io.BytesIO = None) -> List[Union[str, requests.Response]]:
+        """
+        Download a captcha returning the filepath.
+        Note: Deleting the captcha later is not handled here!
+        :param tmp_path: Path to temporary directory or BytesIO. If None tempdir will be used
+        :return: Full path to captcha image file and token [filepath, token].
+                 If BytesIO was used for tmp_path the filepath will be None
+        """
+        if tmp_path is None:
+            tmp_path = tempfile.mktemp(suffix=".png")
+        if os.path.isdir(tmp_path):
+            # Directory, append filename
+            tmp_path = os.path.join(tmp_path, "pr0gramm_captcha.png")
+        captcha_req = get(self.api_url + "user/captcha")
+        token = captcha_req.json()["token"]
+        image = captcha_req.json()["captcha"].split("base64,")[-1]
+        write_img = open(tmp_path, "wb") if not isinstance(tmp_path, io.BytesIO) else tmp_path
+        write_img.write(base64.b64decode(image))
+        write_img.close()
+        return [tmp_path if isinstance(tmp_path, str) else None, token]
+
+    @staticmethod
+    def _prompt_for_captcha(captcha_path: str) -> str:
+        """
+        Show the captcha and ask the user to solve it.
+        Note: Don't call this if you used BytesIO for the captcha. Only if you saved it on disk
+        :param captcha_path: Path to the captcha image or io.BytesIO
+        :return: User provided captcha response or None if the file does not exist
+        """
+        # Basic security check
+        if not isinstance(captcha_path, str) or not os.path.isfile(captcha_path) or \
+                os.path.splitext(captcha_path)[-1] != ".png":
+            return None
+        # Open Image
+        try:
+            webbrowser.open(captcha_path)
+            print("Your webbrowser or image viewer should open and display the image")
+            print("write the correct content of the captcha into the command line:")
+        except:
+            print("Could not open image")
+            print("Open the image '%s' and write the correct content into the command line:" % captcha_path)
+        return input("?: ")
+
+    def login(self, cookie_only: bool = False, token: str = None, captcha_content: str = None) -> bool:
         """
         Logs in with a specific account
 
         Parameters
         ----------
+        :param cookie_only: If set to true the function will
+                            only use a cookie authentication and don't try
+                            to login with username & password
+        :param token: If token and captcha_content are set these will be used for login instead of
+                      displaying the captcha.
+                      Mainly intended for gui programs handling the display on their own
+        :param captcha_content: See token
         :return: bool
                  True if login was successful
                  False if login failed
+        :raises: NotLoggedInException if username is missing
         """
-
-        if self.__password != "" and self.__username != "":
-            cookie_path = os.path.join(self.tmp_dir, "%s_cookie.json" % self.__username)
-
-            # TODO re-login after some time -> delete cookie
-            if os.path.isfile(cookie_path):
-                print("already logged in via cookie -> reading file")
-                try:
-                    with open(cookie_path, "r") as tmp_file:
-                        self.__login_cookie = json.loads(tmp_file.read())
-                    self.logged_in = True
-                    return True
-                except IOError:
-                    print("Could not open cookie file %s", cookie_path)
-
-            r = ""
-            logged_in = False
-            while not logged_in:
-                print("Trying to login in via request.")
-
-                captcha_req = get(self.api_url + "user/captcha")
-                token = captcha_req.json()["token"]
-                image = captcha_req.json()["captcha"].split("base64,")[-1]
-                write_img = open("captcha.png", "wb")
-                write_img.write(base64.b64decode(image))
-                write_img.close()
-
-                try:
-                    webbrowser.open("captcha.png")
-                    print("Your webbrowser or image viewer should open and display the image")
-                    print("write the correct content of the captcha into the command line:")
-                except:
-                    print("Could not open image through xdg-open")
-                    print("Open the image 'captcha.png' and write the correct content into the command line:")
-
-                captcha = input("?: ")
-
-                r = post(self.login_url, data={'name': self.__username, 'password': self.__password,
-                                               'captcha': captcha, 'token': token})
-
-                if not r.json()["success"]:
-                    print("There was an error logging in: " + str(r.json()["error"]))
-                else:
-                    logged_in = True
-
+        user = self.__username if self.__username != "" else "anonymous"
+        cookie_path = os.path.join(self.tmp_dir, "%s.json" % user)
+        # Check for cookie
+        if os.path.isfile(cookie_path):
+            print("already logged in via cookie -> reading file")
             try:
-                if r.json()["code"] == 429:  # rate limit reached (tried to log in too often)
-                    raise RateLimitReached
-            except KeyError:
-                pass
+                with open(cookie_path, "r") as tmp_file:
+                    self.__login_cookie = json.loads(tmp_file.read())
+                self.logged_in = True
+            except IOError:
+                print("Could not open cookie file %s", cookie_path)
+                self.logged_in = False
+        if cookie_only:
+            return self.logged_in
 
+        if self.__password != "" \
+                and self.__username != "" \
+                and not cookie_only \
+                and not self.logged_in:
+            # TODO re-login after some time -> delete cookie
+            captcha = None  # Set it to None so it can be checked later if it was downloaded
+            if captcha_content is None or token is None:
+                # Get the captcha if not provided
+                captcha, token = self.get_captcha()
+            while not self.logged_in:
+                print("Trying to login in via request.")
+                try:
+                    # Prompt for captcha solving
+                    if captcha_content is None or token is None:
+                        captcha_content = self._prompt_for_captcha(captcha)
+                    r = post(self.login_url, data={'name': self.__username, 'password': self.__password,
+                                                   'captcha': captcha_content, 'token': token})
+
+                    if not r.json()["success"]:
+                        print("There was an error logging in: " + str(r.json()["error"]))
+                    elif r.json().get("code", 0) == 429:  # rate limit reached (tried to log in too often)
+                        raise RateLimitReached()
+                    else:
+                        self.logged_in = True
+                except KeyError:
+                    continue
+            # Delete the captcha
+            if captcha is not None:
+                try:
+                    os.remove(captcha)
+                except FileNotFoundError:
+                    pass
+                except IOError:
+                    pass
             if r.json()['success']:
                 self.__login_cookie = r.cookies
                 try:
                     with open(cookie_path, 'w') as temp_file:
                         temp_file.write(json.dumps(utils.dict_from_cookiejar(r.cookies)))
+                    self.logged_in = True
                 except IOError:
                     print('Could not write cookie file %s', cookie_path)
                     self.logged_in = False
-                    return False
             else:
                 print('Login not possible.')
                 self.logged_in = False
-                return False
-
             print("Successfully logged in and written cookie file")
-            self.logged_in = True
             return True
