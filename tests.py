@@ -1,4 +1,5 @@
 # coding=utf-8
+import time
 import unittest
 from os import remove
 from pr0gramm import *
@@ -180,10 +181,15 @@ class Pr0grammApiTests(unittest.TestCase):
 
         self.api = Api(self.USERNAME, self.PASSWORD, "./")
 
-    def tearDown(self):
+    @classmethod
+    def tearDownClass(cls):
         try:
-            remove("./cookie.json")
+            remove("./%s.json" % cls.USERNAME)
+            remove("./pr0gramm.db")
+            remove("./pr0gramm.db-journal")
         except OSError:
+            pass
+        except PermissionError:
             pass
 
     def test_getUrl(self):
@@ -203,13 +209,52 @@ class Pr0grammApiTests(unittest.TestCase):
     def test_login2(self):
         if not self.login:
             return
-
         api = Api("", "", "./temp")
         try:
             api.get_inbox()
             assert False
         except NotLoggedInException:
             assert True
+
+    def test_login3(self):
+        if not self.login:
+            return
+        try:
+            remove("%s.json" % self.USERNAME)
+        except FileNotFoundError:
+            pass
+        # Login anon
+        api = Api("", "", no_login=True)
+        img, token = api.get_captcha("tmp.png")
+        webbrowser.open(img)
+        captcha = input("?: ")
+        assert not api.login(token=token, captcha_content=captcha)
+        # Now it should raise a not logged in exception
+        try:
+            api.get_user_comments("itssme")
+            assert False
+        except NotLoggedInException:
+            assert True
+        try:
+            remove("./tmp.png")
+            remove("anonymous.json")
+        except FileNotFoundError:
+            pass
+        api = Api(self.USERNAME, self.PASSWORD, no_login=True)
+        img, token = api.get_captcha("tmp.png")
+        webbrowser.open(img)
+        captcha = input("?: ")
+        # Login normally
+        assert api.login(token=token, captcha_content=captcha)
+        # Login only with cookie
+        api = Api(self.USERNAME, "", no_login=True)
+        assert api.login(cookie_only=True)
+        try:
+            remove("%s.json" % self.USERNAME)
+        except FileNotFoundError:
+            assert False
+        return
+
 
     def test_inbox1(self):
         if not self.login:
@@ -407,6 +452,7 @@ class Pr0grammApiTests(unittest.TestCase):
         assert result[0][0] == 1
         assert result[0][1] == "schmuserkadser"
         manager.safe_to_disk()
+        time.sleep(1)
         os.remove("pr0gramm.db")
 
     def test_db_comments(self):
@@ -415,6 +461,7 @@ class Pr0grammApiTests(unittest.TestCase):
         manager.safe_to_disk()
         assert manager.manual_command("select * from comments;", wait=True)
         manager.safe_to_disk()
+        time.sleep(1)
         os.remove("pr0gramm.db")
 
     def test_items_by_tag_iterator(self):
@@ -474,7 +521,7 @@ class Pr0grammApiTests(unittest.TestCase):
             assert counter == 5
 
     def test_get_message(self):  # this test will only work with my login (circle-ci tests with my login)
-        if self.login:
+        if self.login and self.USERNAME == "itssme":
             messages = json.loads(self.api.get_messages_with_user("froschler"))
             assert len(messages["messages"]) >= 2
             message1 = 1524674144
