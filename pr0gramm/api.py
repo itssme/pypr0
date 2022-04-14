@@ -909,3 +909,19 @@ class Api:
                  cookies=self.__login_cookie
                  )
         return r.status_code == 200
+
+    @property
+    def ratelimit(self) -> int:
+        """
+        Returns the remaining ratelimit (uploads) for the currently logged in user
+        :raises: NotLoggedInException
+        """
+        if not self.logged_in:
+            raise NotLoggedInException()
+        r = get(url=self.api_url + "items/ratelimited")
+        try:
+            return r.json()["left"]
+        except KeyError:
+            raise NotLoggedInException()
+        except TypeError:
+            return 0
