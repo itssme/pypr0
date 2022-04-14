@@ -654,7 +654,7 @@ class Api:
         :raises: NotLoggedInException if user is not logged in
         """
         if self.logged_in:
-            nonce = json.loads(parse.unquote(self.__login_cookie["me"]))["id"][0:16]
+            nonce = self.__get_current_nonce()
             r = post(self.api_url + "items/vote",
                      data={"id": id, "vote": vote, '_nonce': nonce},
                      cookies=self.__login_cookie)
@@ -681,7 +681,7 @@ class Api:
         :raises: NotLoggedInException if user is not logged in
         """
         if self.logged_in:
-            nonce = json.loads(parse.unquote(self.__login_cookie["me"]))["id"][0:16]
+            nonce = self.__get_current_nonce()
             r = post(self.api_url + "comments/vote",
                      data={"id": id, "vote": vote, '_nonce': nonce},
                      cookies=self.__login_cookie)
@@ -707,7 +707,7 @@ class Api:
         :raises: NotLoggedInException if user is not logged in
         """
         if self.logged_in:
-            nonce = json.loads(parse.unquote(self.__login_cookie["me"]))["id"][0:16]
+            nonce = self.__get_current_nonce()
             r = post(self.api_url + "tags/vote",
                      data={"id": id, "vote": vote, '_nonce': nonce},
                      cookies=self.__login_cookie)
@@ -839,3 +839,41 @@ class Api:
                 self.logged_in = False
             print("Successfully logged in and written cookie file")
             return True
+
+    def __get_current_nonce(self) -> str:
+        """
+        Returns the current nonce
+        :raises: NotLoggedInException
+        """
+        try:
+            nonce = json.loads(parse.unquote(self.__login_cookie["me"]))["id"][0:16]
+        except TypeError:
+            raise NotLoggedInException()
+        if not self.logged_in or nonce is None or nonce == "":
+            raise NotLoggedInException()
+        return nonce
+
+    def add_tag(self, item: int or Post, tag: Union[str, List[str]]):
+        """
+        Add a tag to a given post
+        :param item: Post ID or Post object
+        :param tag: tag to add
+        :return: True if the tag could be added else False
+        :raises: NotLoggedInException if no valid login is used
+        """
+        # Note: I'm not sure how to test this function in unittest since a post can only have a tag once and spamming
+        # Tags to random posts for testing isn't a real option...
+        # So this function was tested manually
+        assert item is not None
+        assert len(tag) > 0
+        data = {
+            "_nonce": self.__get_current_nonce(),  # This raises the NotLoggedInException and ensures a valid user is
+            # used
+            "itemId": item if isinstance(item, int) else item["id"],
+            "tags": ",".join(tag) if isinstance(tag, list) else tag
+        }
+        r = post(url=self.api_url + "tags/add",
+                 data=data,
+                 cookies=self.__login_cookie
+                 )
+        return r.status_code == 200
