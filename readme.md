@@ -37,9 +37,14 @@ For examples see this repository: https://github.com/itssme/pypr0-examples
 
 # Release Notes
 
-## 0.2.5
+## 0.2.6
 
 **current version**
+
++ improvement of the login functions (ref: https://github.com/itssme/pypr0/pull/7); thanks to [@chill0r](https://github.com/chill0r)
++ added more documentation to api classes
+
+## 0.2.5
 
 + a lot of refactoring and cleaning up in all api functions
 + passing 'newer' to ```get_items_by_tag``` is now deprecated, instead pass 'older' as a boolean and pass an 'item' as id (just like for any other api function)

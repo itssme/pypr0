@@ -18,7 +18,7 @@ from urllib import parse
 
 
 class ApiItem(dict):
-    def __init__(self, json_str="", json_obj=None):
+    def __init__(self, json_str: str = "", json_obj: dict = None):
         if json_str:
             super(ApiItem, self).__init__(json.loads(json_str))
 
@@ -37,12 +37,32 @@ class ApiItem(dict):
 
 
 class Post(ApiItem):
-    def __init__(self, json_str="", json_obj=""):
+    def __init__(self, json_str: str = "", json_obj: dict = None):
+        """
+        A post in pr0gramm.com
+
+        Parameters
+        ----------
+        :param json_str: str
+                         Json str as returned by api
+        :param json_obj: dict
+                         Json object, parsed dictionary from json api response
+        """
         super(Post, self).__init__(json_str, json_obj)
 
 
 class User(ApiItem):
-    def __init__(self, json_str="", json_obj=None):
+    def __init__(self, json_str: str = "", json_obj: dict = None):
+        """
+        A user profile of pr0gramm.com
+
+        Parameters
+        ----------
+        :param json_str: str
+                         Json str as returned by api
+        :param json_obj: dict
+                         Json object, parsed dictionary from json api response
+        """
         super(User, self).__init__()
 
         if json_str:
@@ -63,14 +83,8 @@ class User(ApiItem):
         self["followCount"] = json_obj["followCount"]
 
 
-class Comment(ApiItem):
-    def __init__(self, json_str="", json_obj="", comment_assignment=None):
-        super(Comment, self).__init__(json_str, json_obj)
-        self.comment_assignment = comment_assignment
-
-
 class CommentAssignment:
-    def __init__(self, post, comment):
+    def __init__(self, post: int, comment: int):
         """
         Links a comment to a post
 
@@ -85,34 +99,54 @@ class CommentAssignment:
         self.comment = comment
 
 
-class Tag(ApiItem):
-    def __init__(self, json_str="", json_obj=""):
+class Comment(ApiItem):
+    def __init__(self, json_str: str = "", json_obj: dict = None, comment_assignment: CommentAssignment = None):
         """
-        A tag from an post
+        A comment from a post
 
         Parameters
         ----------
-        :param json_str:
-        :param json_obj:
+        :param json_str: str
+                         Json str as returned by api
+        :param json_obj: dict
+                         Json object, parsed dictionary from json api response
+        :param comment_assignment: :CommentAssignment
+                                   Assigns this comment to a post
+        """
+        super(Comment, self).__init__(json_str, json_obj)
+        self.comment_assignment = comment_assignment
+
+
+class Tag(ApiItem):
+    def __init__(self, json_str: str = "", json_obj: dict = None):
+        """
+        A tag from a post
+
+        Parameters
+        ----------
+        :param json_str: str
+                         Json str as returned by api
+        :param json_obj: dict
+                         Json object, parsed dictionary from json api response
         """
         super(Tag, self).__init__(json_str, json_obj)
 
 
 class TagAssignment:
-    def __init__(self, post, id, tag, confidence):
+    def __init__(self, post: int, id: int, tag: int, confidence: float):
         """
         Links a tag to a post
 
         Parameters
         ----------
         :param post: int
-                     id of an post
+                     id of a post
         :param id: int
-                    id of an tag
+                    id of a tag
         :param tag: int
-                    id of an saved tag in the db
+                    id of a saved tag in the db
         :param confidence: float
-                           confidence of an tag
+                           confidence of a tag
 
         """
         self.post = post
@@ -153,7 +187,17 @@ class ApiList(list):
 
 
 class Posts(ApiList):
-    def __init__(self, json_str=""):
+    def __init__(self, json_str: str = ""):
+        """
+        A list of multiple :Post objects
+
+        Parameters
+        ----------
+        :param json_str: str
+                         Json str containing multiple posts
+                         Example:
+                            api.get_items_iterator(...) returns a :Posts object
+        """
         super(Posts, self).__init__()
 
         if json_str != "":
@@ -178,6 +222,16 @@ class Posts(ApiList):
 
 class Comments(ApiList):
     def __init__(self, json_str=""):
+        """
+        A list of multiple :Comment objects
+
+        Parameters
+        ----------
+        :param json_str: str
+                         Json str containing multiple comments
+                         Example:
+                            api.get_user_comments_iterator(...) returns a :Comments object
+        """
         super(Comments, self).__init__()
 
         if json_str != "":
@@ -190,11 +244,22 @@ class Comments(ApiList):
 
 class CommentAssignments(list):
     def __init__(self):
+        """
+        A list of multiple :CommentAssignment objects
+        """
         super(CommentAssignments, self).__init__()
 
 
 class Tags(ApiList):
     def __init__(self, json_str=""):
+        """
+        A list of multiple :Tag objects
+
+        Parameters
+        ----------
+        :param json_str: str
+                         Json str containing multiple tags
+        """
         super(Tags, self).__init__()
 
         if json_str != "":
@@ -207,6 +272,9 @@ class Tags(ApiList):
 
 class TagAssignments(list):
     def __init__(self):
+        """
+        A list of multiple :TagAssignment objects
+        """
         super(TagAssignments, self).__init__()
 
 
@@ -972,7 +1040,7 @@ class Api:
         cookie_path = os.path.join(self.tmp_dir, "%s.json" % user)
         # Check for cookie
         if os.path.isfile(cookie_path):
-            print("already logged in via cookie -> reading file")
+            print("Already logged in via cookie -> reading file")
             try:
                 with open(cookie_path, "r") as tmp_file:
                     self.__login_cookie = json.loads(tmp_file.read())
@@ -1024,10 +1092,10 @@ class Api:
                         temp_file.write(json.dumps(utils.dict_from_cookiejar(r.cookies)))
                     self.logged_in = True
                 except IOError:
-                    print('Could not write cookie file %s', cookie_path)
+                    print("Could not write cookie file %s", cookie_path)
                     self.logged_in = False
             else:
-                print('Login not possible.')
+                print("Login not possible.")
                 self.logged_in = False
             print("Successfully logged in and written cookie file")
             return True

@@ -136,13 +136,13 @@ todo
 
 todo
 
-# Exampels
+# Examples
 
 ```python
-from api import Api
+from pr0gramm import *
 api = Api("gamb", "adminadmin", "/tmp")
 if api.login():
-    print "wow"
+    print("logged in")
 else:
-    print "failed to log in"
+    print("failed to log in")
 ```

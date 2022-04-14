@@ -187,9 +187,9 @@ class Pr0grammApiTests(unittest.TestCase):
             remove("./%s.json" % cls.USERNAME)
             remove("./pr0gramm.db")
             remove("./pr0gramm.db-journal")
-        except OSError:
-            pass
         except PermissionError:
+            pass
+        except OSError:
             pass
 
     def test_getUrl(self):
@@ -254,7 +254,6 @@ class Pr0grammApiTests(unittest.TestCase):
         except FileNotFoundError:
             assert False
         return
-
 
     def test_inbox1(self):
         if not self.login:
@@ -422,7 +421,8 @@ class Pr0grammApiTests(unittest.TestCase):
                 break
         assert len(all_posts) > 0
 
-    def test_calculate_flags(self):
+    @staticmethod
+    def test_calculate_flags():
         assert Api.calculate_flag(sfw=True) == 1
         assert Api.calculate_flag(sfw=False, nsfw=True) == 2
         assert Api.calculate_flag(sfw=False, nsfp=True, nsfl=True) == 4
@@ -501,14 +501,15 @@ class Pr0grammApiTests(unittest.TestCase):
             self.assert_post(l_post)
 
         assert upvotes > 0
-        assert (upvotes-downvotes) > 0
+        assert (upvotes - downvotes) > 0
 
     def test_user_comments_iterator(self):
         if self.login:
             all_comments = Comments()
             counter = 0
-            for comments in self.api.get_user_comments_iterator("itssme", flag=self.api.calculate_flag(sfw=True, nsfp=False,
-                                                                                                  nsfw=False, nsfl=False)):
+            for comments in self.api.get_user_comments_iterator("itssme",
+                                                                flag=self.api.calculate_flag(sfw=True, nsfp=False,
+                                                                                             nsfw=False, nsfl=False)):
                 if counter >= 5:
                     break
                 counter += 1
