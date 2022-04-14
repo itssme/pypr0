@@ -877,3 +877,35 @@ class Api:
                  cookies=self.__login_cookie
                  )
         return r.status_code == 200
+
+    def delete_item(self, item: int or Post, reason: str, notifyUser: bool = True, days: int = 0, banUser: bool = False):
+        """
+        Delete a item.
+        Note: Normal users can only delete their own posts and cannot ban users so days and banUser
+        :param item: id or Post to delete
+        :param reason: Reason for the deletion
+        :param notifyUser: Notify to user?
+        :param days: If banUser is True: For how long?
+        :param banUser: Bans the user
+        :return: True if the post was deleted else False
+        :raises: NotLoggedInException
+        """
+        # Note: I'm not sure how to test this function in unittest since a post can only be deleted once
+        # I don't want do upload a post and later delete it everytime this function is tested
+        # So this function was tested manually
+        assert item is not None
+        assert len(reason) > 0
+        data = {
+            "_nonce": self.__get_current_nonce(),
+            "itemId": item if isinstance(item, int) else item["id"],
+            "banUser": banUser,
+            "days": days,
+            "notifyUser": notifyUser,
+            "reason": reason,
+            "customReason": ""  # Not used yet
+        }
+        r = post(url=self.api_url + "items/delete",
+                 data=data,
+                 cookies=self.__login_cookie
+                 )
+        return r.status_code == 200
