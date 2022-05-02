@@ -37,9 +37,13 @@ For examples see this repository: https://github.com/itssme/pypr0-examples
 
 # Release Notes
 
-## 0.2.6
+## 0.2.7
 
 **current version**
+
++ more improvements and refactoring (ref: https://github.com/itssme/pypr0/pull/8); thanks to [@chill0r](https://github.com/chill0r)
+
+## 0.2.6
 
 + improvement of the login functions (ref: https://github.com/itssme/pypr0/pull/7); thanks to [@chill0r](https://github.com/chill0r)
 + added more documentation to api classes
