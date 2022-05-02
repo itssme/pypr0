@@ -549,6 +549,24 @@ class Pr0grammApiTests(unittest.TestCase):
         assert result[0][0] == 1
         os.remove("pr0gramm.db")
 
+    def test_ratelimit_nologin(self):
+        api = Api()  # DO NOT use the self.api here since it could be logged in!
+        try:
+            api.ratelimit
+            assert False
+        except NotLoggedInException:
+            assert True
+        return
+
+    def test_ratelimit_login(self):
+        # Note: This test WILL fail if you uploaded a post before running this test
+        if not self.login:
+            return
+        try:
+            assert self.api.ratelimit == 12
+        except NotLoggedInException:
+            assert False
+
 
 if __name__ == '__main__':
     # for testing with login call like: USERNAME="itssme" PASSWORD="1234" LOGIN="true" python3 tests.py
