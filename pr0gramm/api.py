@@ -55,7 +55,7 @@ class Api:
         return posts
 
     @staticmethod
-    def calculate_flag(sfw: bool = True, nsfp: bool = False, nsfw: bool = False, nsfl: bool = False) -> int:
+    def calculate_flag(sfw: bool = True, nsfp: bool = False, nsfw: bool = False, nsfl: bool = False, pol: bool = False) -> int:
         """
         Used to calculate flags for the post requests
 
@@ -69,6 +69,12 @@ class Api:
         sfw + nsfp = 9
         sfw + nsfp + nsfw = 11
         sfw + nsfp + nsfw + nsfl = 15
+        pol = 16
+        all flags = 31
+
+        NOTE the priority of the filters is no longer the same as the numbers representing them!
+        pol has the id 16 as it's the newest flag but it's not the highest priority, that's still NSFL
+        current flag priority: SFW < NSFP < POL < NSFW < NSFL
 
         Parameters
         ----------
@@ -76,6 +82,7 @@ class Api:
         :param nsfp: bool
         :param nsfw: bool
         :param nsfl: bool
+        :param pol: bool
         :return: Calculated flag for requests
         """
         flag = 0
@@ -84,6 +91,7 @@ class Api:
         flag += 2 if nsfw else 0
         flag += 4 if nsfl else 0
         flag += 8 if nsfp and sfw else 0
+        flag += 16 if pol else 0
 
         return flag
 

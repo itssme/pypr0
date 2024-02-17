@@ -108,7 +108,7 @@ A list containing `posts`
         - `source:str` <br>
         A link if the image/video was directly uploaded from another website otherwise an emtpy string
         - `flags:int` <br>
-        Flags for sfw/nsfp/nsfw/nsfl
+        Flags for sfw/nsfp/nsfw/nsfl/pol
         - `user:str` <br>
         Unique name of the uploader
 ---
