@@ -5,6 +5,8 @@ import uuid
 from multiprocessing import JoinableQueue
 from time import sleep
 
+from pr0gramm.items import *
+
 
 class Manager(threading.Thread):
     def __init__(self, file_name, in_memory=False, sql_file=None):
@@ -104,57 +106,58 @@ class Manager(threading.Thread):
             else:
                 raise LookupError
 
-    def insert_post(self, post):
-        statement = "insert into posts values(" + "".join(["?," for key, value in post.items()])[:-1] + ")"
+    def insert_post(self, post: Post):
+        # TODO: update with new values
         data = [post["id"], post["user"], post["promoted"], post["up"], post["down"], post["created"], post["image"],
                 post["thumb"], post["fullsize"], post["width"], post["height"], post["audio"], post["source"],
                 post["flags"], post["userId"], post["mark"], post["gift"]]
+        statement = "insert into posts values(" + "".join(["?," for i in range(len(data))])[:-1] + ")"
         self.sql_queue.put((statement, data, None))
 
-    def insert_posts(self, posts):
+    def insert_posts(self, posts: Posts):
         for post in posts:
             self.insert_post(post)
 
-    def insert_user(self, user):
-        statement = "insert into posts values(" + "".join(["?," for key, value in user.items()])[:-1] + ")"
+    def insert_user(self, user: User):
         data = [user["name"], user["id"], user["registered"], user["admin"], user["banned"], user["bannedUntil"],
                 user["mark"], user["score"], user["tags"], user["likes"], user["comments"], user["followers"]]
+        statement = "insert into users values(" + "".join(["?," for i in range(len(data))])[:-1] + ")"
         self.sql_queue.put((statement, data, None))
 
-    def insert_comment(self, comment):
-        statement = "insert into comments values(" + "".join(["?," for key, value in comment.items()])[:-1] + ")"
+    def insert_comment(self, comment: Comment):
         data = [comment["id"], comment["content"], comment["name"], comment["parent"], comment["created"],
                 comment["up"], comment["down"], comment["confidence"], comment["mark"]]
+        statement = "insert into comments values(" + "".join(["?," for i in range(len(data))])[:-1] + ")"
         self.sql_queue.put((statement, data, None))
 
-    def insert_comments(self, comments):
+    def insert_comments(self, comments: Comments):
         for comment in comments:
             self.insert_comment(comment)
 
-    def insert_tag(self, tag):
-        statement = "insert into tags values(?, ?)"
+    def insert_tag(self, tag: Tag):
         data = [None, tag["tag"]]
+        statement = "insert into tags values(?, ?)"
         self.sql_queue.put((statement, data, None))
 
-    def insert_tags(self, tags):
+    def insert_tags(self, tags: Tags):
         for tag in tags:
             self.insert_tag(tag)
 
-    def insert_comment_assignment(self, comment_assignment):
-        statement = "insert into comment_assignments values(?, ?)"
+    def insert_comment_assignment(self, comment_assignment: CommentAssignment):
         data = [comment_assignment.post, comment_assignment.comment]
+        statement = "insert into comment_assignments values(?, ?)"
         self.sql_queue.put((statement, data, None))
 
-    def insert_comment_assignments(self, comment_assignments):
+    def insert_comment_assignments(self, comment_assignments: CommentAssignments):
         for comment_assignment in comment_assignments:
             self.insert_comment_assignment(comment_assignment)
 
-    def insert_tag_assignment(self, tag_assignment):
-        statement = "insert into tag_assignments values(?, ?, ?, ?)"
+    def insert_tag_assignment(self, tag_assignment: TagAssignment):
         data = [tag_assignment.post, tag_assignment.id, tag_assignment.tag, tag_assignment.confidence]
+        statement = "insert into tag_assignments values(?, ?, ?, ?)"
         self.sql_queue.put((statement, data, None))
 
-    def insert_tag_assignments(self, tag_assignments):
+    def insert_tag_assignments(self, tag_assignments: TagAssignments):
         for tag_assignment in tag_assignments:
             self.insert_tag_assignment(tag_assignment)
 

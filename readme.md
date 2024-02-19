@@ -32,14 +32,16 @@ For examples see this repository: https://github.com/itssme/pypr0-examples
 
 ---
 
-### CircleCI build
-[![CircleCI](https://circleci.com/gh/itssme/pypr0.svg?style=svg&circle-token=87c5fd78b5010d4e2c26dc9c2a385ed40be57818)](https://circleci.com/gh/itssme/python_pr0gramm_api)
-
 # Release Notes
 
-## 0.2.7
+## 0.2.8
 
 **current version**
+
++ added new ```pol``` flag to ```calculate_flag``` function (ref: https://github.com/itssme/pypr0/pull/10); thanks to [@iFuzzle](https://github.com/iFuzzle)
++ fixed sql_manager and made it more resilient to API changes (new values will now be ignored and don't break the sql manager)
+
+## 0.2.7
 
 + more improvements and refactoring (ref: https://github.com/itssme/pypr0/pull/8); thanks to [@chill0r](https://github.com/chill0r)
 
